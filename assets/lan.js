@@ -38,7 +38,7 @@ class LANMode extends BaseChatMode {
         const networkId = await this.getNetworkIdentifier();
         const defaultRoom = `lan_${networkId}`;
         
-        console.log('Auto-connecting to LAN room:', defaultRoom);
+        console.log('自动连接到局域网房间:', defaultRoom);
         
         // 保存预期的房间名
         this.currentRoomId = defaultRoom;
@@ -72,7 +72,7 @@ class LANMode extends BaseChatMode {
             
             return localSegment || 'default';
         } catch (error) {
-            console.error('Failed to get network identifier:', error);
+            console.error('获取网络标识符失败:', error);
             return 'default';
         }
     }
@@ -108,7 +108,7 @@ class LANMode extends BaseChatMode {
                                 resolved = true;
                                 clearTimeout(timeout);
                                 pc.close();
-                                console.log('Detected public IP:', ip);
+                                console.log('检测到公网IP:', ip);
                                 resolve(ip);
                             }
                         }
@@ -116,7 +116,7 @@ class LANMode extends BaseChatMode {
                 };
             });
         } catch (error) {
-            console.error('Failed to get public IP:', error);
+            console.error('获取公网IP失败:', error);
             return 'unknown';
         }
     }
@@ -154,7 +154,7 @@ class LANMode extends BaseChatMode {
                                 resolved = true;
                                 clearTimeout(timeout);
                                 pc.close();
-                                console.log('Detected local network segment:', segment);
+                                console.log('检测到本地网段:', segment);
                                 resolve(segment);
                             }
                         }
@@ -162,7 +162,7 @@ class LANMode extends BaseChatMode {
                 };
             });
         } catch (error) {
-            console.error('Failed to get local network segment:', error);
+            console.error('获取本地网段失败:', error);
             return 'default';
         }
     }
@@ -185,7 +185,7 @@ class LANMode extends BaseChatMode {
         const users = data.users || [];
         const usersInfo = data.usersInfo || {};
         
-        console.log('Joined LAN room:', this.currentRoomId, 'with users:', users.map(id => this.formatUserId(id)));
+        console.log('已加入局域网房间:', this.currentRoomId, '用户列表:', users.map(id => this.formatUserId(id)));
         
         this.roomUsers.clear();
         this.roomUsers.set(this.currentUserId, this.currentUserInfo);
@@ -206,7 +206,7 @@ class LANMode extends BaseChatMode {
         
         users.forEach(userId => {
             if (userId !== this.currentUserId) {
-                console.log('Creating peer connection with:', this.formatUserId(userId));
+                console.log('创建与以下用户的P2P连接:', this.formatUserId(userId));
                 this.createPeerConnection(userId, true);
             }
         });

@@ -1,4 +1,4 @@
-# P2P 聊天室
+# WebChat
 
 一个基于 WebRTC 的点对点聊天应用，支持局域网自动发现和公网手动连接两种模式。
 
@@ -19,7 +19,7 @@
 1. 克隆项目
 ```bash
 git clone <repository-url>
-cd p2pchat
+cd webchat
 ```
 
 2. 启动本地服务器
@@ -37,8 +37,8 @@ npx http-server -p 8080
 
 ```bash
 cd core
-docker build -t p2pchat .
-docker run -p 8080:8080 p2pchat
+docker build -t webchat .
+docker run -p 8080:8080 webchat
 ```
 
 ## 📖 使用说明
@@ -64,7 +64,7 @@ docker run -p 8080:8080 p2pchat
 ### 文件结构
 
 ```
-p2pchat/
+webchat/
 ├── index.html              # 主页面
 ├── assets/
 │   ├── config.js          # 配置文件

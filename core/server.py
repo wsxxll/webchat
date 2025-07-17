@@ -23,7 +23,7 @@ users_info: Dict[str, Dict[str, dict]] = {}  # room_id -> {user_id -> user_info}
 
 
 async def cleanup_user(user_id: str):
-    """Clean up user data when disconnecting"""
+    """清理断开连接时的用户数据"""
     client = clients.get(user_id)
     if not client:
         return
@@ -32,37 +32,37 @@ async def cleanup_user(user_id: str):
     if room_id and room_id in rooms:
         rooms[room_id].discard(user_id)
         
-        # Remove user info
+        # 移除用户信息
         if room_id in users_info and user_id in users_info[room_id]:
             del users_info[room_id][user_id]
         
-        # Notify other users
+        # 通知其他用户
         await broadcast(room_id, {
             'type': 'user-left',
             'userId': user_id
         }, exclude_user=user_id)
         
-        # Broadcast updated user list
+        # 广播更新后的用户列表
         await broadcast_user_list(room_id)
         
-        # Remove empty rooms
+        # 移除空房间
         if not rooms[room_id]:
             del rooms[room_id]
             if room_id in users_info:
                 del users_info[room_id]
     
-    # Close websocket if still open
+    # 关闭WebSocket连接（如果仍然打开）
     ws = client.get('ws')
     if ws and not ws.closed:
         await ws.close()
     
-    # Remove client
+    # 移除客户端
     if user_id in clients:
         del clients[user_id]
 
 
 async def broadcast(room_id: str, message: dict, exclude_user: str = None):
-    """Broadcast message to all users in a room"""
+    """向房间内所有用户广播消息"""
     if room_id not in rooms:
         return
     
@@ -79,7 +79,7 @@ async def broadcast(room_id: str, message: dict, exclude_user: str = None):
 
 
 async def broadcast_user_list(room_id: str):
-    """Broadcast updated user list to all users in a room"""
+    """向房间内所有用户广播更新后的用户列表"""
     if room_id not in rooms:
         return
     
@@ -91,11 +91,11 @@ async def broadcast_user_list(room_id: str):
 
 
 async def handle_message(ws: WebSocketServerProtocol, user_id: str, message: dict):
-    """Handle incoming WebSocket messages"""
+    """处理传入的WebSocket消息"""
     msg_type = message.get('type')
     
     if msg_type == 'join':
-        # Leave current room if any
+        # 离开当前房间（如果有）
         if clients[user_id]['room_id']:
             await cleanup_user(user_id)
             clients[user_id] = {'ws': ws, 'room_id': None, 'last_heartbeat': time.time()}
@@ -105,7 +105,7 @@ async def handle_message(ws: WebSocketServerProtocol, user_id: str, message: dic
         
         clients[user_id]['room_id'] = room_id
         
-        # Create room if doesn't exist
+        # 如果房间不存在则创建
         if room_id not in rooms:
             rooms[room_id] = set()
         if room_id not in users_info:
@@ -114,7 +114,7 @@ async def handle_message(ws: WebSocketServerProtocol, user_id: str, message: dic
         rooms[room_id].add(user_id)
         users_info[room_id][user_id] = user_info
         
-        # Send join confirmation with user info
+        # 发送加入确认和用户信息
         await ws.send(json.dumps({
             'type': 'joined',
             'userId': user_id,
@@ -123,14 +123,14 @@ async def handle_message(ws: WebSocketServerProtocol, user_id: str, message: dic
             'usersInfo': users_info[room_id]
         }))
         
-        # Notify others with user info
+        # 通知其他用户并带有用户信息
         await broadcast(room_id, {
             'type': 'user-joined',
             'userId': user_id,
             'userInfo': user_info
         }, exclude_user=user_id)
         
-        # Broadcast updated user list
+        # 广播更新后的用户列表
         await broadcast_user_list(room_id)
     
     elif msg_type in ['offer', 'answer', 'ice-candidate']:
@@ -149,7 +149,7 @@ async def handle_message(ws: WebSocketServerProtocol, user_id: str, message: dic
 
 
 async def handle_connection(ws: WebSocketServerProtocol, path: str):
-    """Handle new WebSocket connection"""
+    """处理新的WebSocket连接"""
     # 生成更友好的用户ID
     user_id = f"user_{int(time.time() * 1000) % 1000000}"
     clients[user_id] = {
@@ -178,7 +178,7 @@ async def handle_connection(ws: WebSocketServerProtocol, path: str):
 
 
 async def cleanup_inactive_users():
-    """Periodically clean up inactive users"""
+    """定期清理不活跃的用户"""
     while True:
         await asyncio.sleep(HEARTBEAT_INTERVAL)
         current_time = time.time()
@@ -194,15 +194,15 @@ async def cleanup_inactive_users():
 
 
 async def main():
-    """Start the WebSocket server"""
+    """启动WebSocket服务器"""
     logger.info(f"Starting signaling server on port {PORT}")
     
-    # Start cleanup task
+    # 启动清理任务
     asyncio.create_task(cleanup_inactive_users())
     
-    # Start WebSocket server
+    # 启动WebSocket服务器
     async with websockets.serve(handle_connection, "0.0.0.0", PORT):
-        await asyncio.Future()  # Run forever
+        await asyncio.Future()  # 永久运行
 
 
 if __name__ == "__main__":

@@ -96,7 +96,7 @@ class InternetMode extends BaseChatMode {
         const users = data.users || [];
         const usersInfo = data.usersInfo || {};
         
-        console.log('Joined room:', this.currentRoomId, 'with users:', users.map(id => this.formatUserId(id)));
+        console.log('已加入房间:', this.currentRoomId, '用户列表:', users.map(id => this.formatUserId(id)));
         
         this.roomUsers.clear();
         this.roomUsers.set(this.currentUserId, this.currentUserInfo);
@@ -120,7 +120,7 @@ class InternetMode extends BaseChatMode {
         
         users.forEach(userId => {
             if (userId !== this.currentUserId) {
-                console.log('Creating peer connection with:', this.formatUserId(userId));
+                console.log('创建与以下用户的P2P连接:', this.formatUserId(userId));
                 this.createPeerConnection(userId, true);
             }
         });

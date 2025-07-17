@@ -65,7 +65,7 @@ class ModeSelector {
                 return;
             }
             
-            // Convert server URLs to objects with priority if needed
+            // 将服务器URL转换为带优先级的对象
             this.availableServers = WS_CONFIG.servers.map((server, index) => {
                 if (typeof server === 'string') {
                     return { url: server, priority: index + 1 };
@@ -74,7 +74,7 @@ class ModeSelector {
             });
             this.tryNextServer();
         } catch (error) {
-            console.error('Failed to load server list:', error);
+            console.error('加载服务器列表失败:', error);
             this.showNotification('❌ 加载服务器列表失败');
         }
     }
@@ -88,7 +88,7 @@ class ModeSelector {
         
         const server = this.availableServers[this.currentServerIndex];
         const serverUrl = server.url;
-        console.log(`Trying server ${this.currentServerIndex + 1}/${this.availableServers.length}: ${server.name || serverUrl}`);
+        console.log(`尝试连接服务器 ${this.currentServerIndex + 1}/${this.availableServers.length}: ${server.name || serverUrl}`);
         this.showNotification(`🔄 连接到 ${server.name || '服务器'}...`);
         this.connectWebSocket(serverUrl);
     }
@@ -98,7 +98,7 @@ class ModeSelector {
             this.websocket = new WebSocket(serverUrl || WS_CONFIG.url);
             
             this.websocket.onopen = () => {
-                console.log('WebSocket connected to:', serverUrl || WS_CONFIG.url);
+                console.log('WebSocket已连接到:', serverUrl || WS_CONFIG.url);
                 this.isWebSocketConnected = true;
                 this.reconnectionAttempts = 0;
                 this.currentServerIndex = 0;
@@ -120,7 +120,7 @@ class ModeSelector {
             };
             
             this.websocket.onerror = (error) => {
-                console.error('WebSocket error:', error);
+                console.error('WebSocket错误:', error);
                 this.showNotification('❌ 连接错误，尝试下一个服务器...');
                 
                 this.currentServerIndex++;
@@ -128,7 +128,7 @@ class ModeSelector {
             };
             
             this.websocket.onclose = () => {
-                console.log('WebSocket disconnected');
+                console.log('WebSocket已断开');
                 this.isWebSocketConnected = false;
                 this.stopHeartbeat();
                 
@@ -151,7 +151,7 @@ class ModeSelector {
                 }
             };
         } catch (error) {
-            console.error('Failed to connect WebSocket:', error);
+            console.error('WebSocket连接失败:', error);
         }
     }
     
@@ -163,7 +163,7 @@ class ModeSelector {
         if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
             this.websocket.send(JSON.stringify(data));
         } else {
-            console.error('WebSocket is not connected');
+            console.error('WebSocket未连接');
         }
     }
     
@@ -225,10 +225,10 @@ class ModeSelector {
             }
             
             this.currentMode = mode;
-            console.log(`Loaded ${mode} mode`);
+            console.log(`已加载${mode === 'lan' ? '局域网' : '公网'}模式`);
             
         } catch (error) {
-            console.error(`Failed to load ${mode} mode:`, error);
+            console.error(`加载${mode === 'lan' ? '局域网' : '公网'}模式失败:`, error);
             this.showNotification(`❌ 加载${mode === 'lan' ? '局域网' : '公网'}模式失败`);
         }
     }
@@ -623,13 +623,13 @@ class BaseChatMode {
 
     // P2P连接管理
     createPeerConnection(peerId, createOffer) {
-        console.log(`Creating peer connection with ${this.formatUserId(peerId)}, createOffer: ${createOffer}`);
+        console.log(`创建与 ${this.formatUserId(peerId)} 的P2P连接, 是否创建offer: ${createOffer}`);
         const pc = new RTCPeerConnection(RTC_CONFIG);
         const peerData = { pc, dataChannel: null };
         this.peerConnections.set(peerId, peerData);
         
         pc.onconnectionstatechange = () => {
-            console.log(`Connection state with ${this.formatUserId(peerId)}: ${pc.connectionState}`);
+            console.log(`与 ${this.formatUserId(peerId)} 的连接状态: ${pc.connectionState}`);
             if (pc.connectionState === 'connected') {
                 this.showNotification(`✅ 已与用户建立P2P连接`);
             } else if (pc.connectionState === 'failed') {
@@ -647,7 +647,7 @@ class BaseChatMode {
         
         pc.onicecandidate = (event) => {
             if (event.candidate) {
-                console.log(`Sending ICE candidate to ${this.formatUserId(peerId)}`);
+                console.log(`向 ${this.formatUserId(peerId)} 发送ICE候选`);
                 this.sendWebSocketMessage({
                     type: 'ice-candidate',
                     target: peerId,
@@ -657,14 +657,14 @@ class BaseChatMode {
         };
         
         pc.ondatachannel = (event) => {
-            console.log(`Received data channel from ${this.formatUserId(peerId)}`);
+            console.log(`从 ${this.formatUserId(peerId)} 接收到数据通道`);
             peerData.dataChannel = event.channel;
             this.setupDataChannel(event.channel, peerId);
         };
         
         if (createOffer) {
             pc.createOffer().then(offer => {
-                console.log(`Creating offer for ${this.formatUserId(peerId)}`);
+                console.log(`为 ${this.formatUserId(peerId)} 创建offer`);
                 pc.setLocalDescription(offer);
                 this.sendWebSocketMessage({
                     type: 'offer',
@@ -672,7 +672,7 @@ class BaseChatMode {
                     data: offer
                 });
             }).catch(error => {
-                console.error(`Failed to create offer for ${this.formatUserId(peerId)}:`, error);
+                console.error(`为 ${this.formatUserId(peerId)} 创建offer失败:`, error);
             });
         }
         
@@ -681,7 +681,7 @@ class BaseChatMode {
 
     setupDataChannel(dataChannel, peerId) {
         dataChannel.onopen = () => {
-            console.log(`Data channel opened with ${this.formatUserId(peerId)}`);
+            console.log(`与 ${this.formatUserId(peerId)} 的数据通道已打开`);
             this.showNotification(`💬 数据通道已建立，可以开始聊天`);
             this.updateChannelStatus();
             this.renderUserList();
@@ -724,7 +724,7 @@ class BaseChatMode {
         };
         
         dataChannel.onerror = (error) => {
-            console.error(`Data channel error with ${this.formatUserId(peerId)}:`, error);
+            console.error(`与 ${this.formatUserId(peerId)} 的数据通道出错:`, error);
             
             // 清理可能正在进行的文件传输
             if (this.fileSenders) {
@@ -741,7 +741,7 @@ class BaseChatMode {
         };
         
         dataChannel.onclose = () => {
-            console.log(`Data channel closed with ${this.formatUserId(peerId)}`);
+            console.log(`与 ${this.formatUserId(peerId)} 的数据通道已关闭`);
             this.updateChannelStatus();
             this.renderUserList();
         };
@@ -1710,7 +1710,7 @@ class BaseChatMode {
                         
                         if (bufferedAmount > maxBuffer) {
                             // 缓冲区满了，等待后重试
-                            console.log('Buffer full, waiting...', bufferedAmount);
+                            console.log('缓冲区已满，等待中...', bufferedAmount);
                             setTimeout(() => sender.sendNextChunk(), 100);
                             return;
                         }
@@ -1749,7 +1749,7 @@ class BaseChatMode {
                             this.pendingFiles?.delete(fileId);
                         }
                     } catch (error) {
-                        console.error('Error sending chunk:', error);
+                        console.error('发送数据块出错:', error);
                         sender.isPaused = true;
                         this.showNotification(`❌ 文件发送失败: ${sender.file.name}`);
                         this.fileSenders.delete(fileId);
