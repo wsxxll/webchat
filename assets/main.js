@@ -679,6 +679,7 @@ class BaseChatMode {
         this.showNotification(`👋 ${userName} 加入了房间`);
         this.updateUserList();
         
+        // 新用户加入，我们作为接收方，不创建 offer
         if (data.userId !== this.currentUserId) {
             this.createPeerConnection(data.userId, false);
         }
@@ -728,8 +729,8 @@ class BaseChatMode {
                 console.log(`向 ${this.formatUserId(peerId)} 发送ICE候选`);
                 this.sendWebSocketMessage({
                     type: 'ice-candidate',
-                    target: peerId,
-                    data: event.candidate
+                    targetUserId: peerId,
+                    candidate: event.candidate
                 });
             }
         };
@@ -746,8 +747,8 @@ class BaseChatMode {
                 pc.setLocalDescription(offer);
                 this.sendWebSocketMessage({
                     type: 'offer',
-                    target: peerId,
-                    data: offer
+                    targetUserId: peerId,
+                    offer: offer
                 });
             }).catch(error => {
                 console.error(`为 ${this.formatUserId(peerId)} 创建offer失败:`, error);
@@ -830,31 +831,31 @@ class BaseChatMode {
     }
 
     handleOffer(data) {
-        const pc = this.createPeerConnection(data.from, false);
+        const pc = this.createPeerConnection(data.userId, false);
         
-        pc.setRemoteDescription(new RTCSessionDescription(data.data))
+        pc.setRemoteDescription(new RTCSessionDescription(data.offer))
             .then(() => pc.createAnswer())
             .then(answer => {
                 pc.setLocalDescription(answer);
                 this.sendWebSocketMessage({
                     type: 'answer',
-                    target: data.from,
-                    data: answer
+                    targetUserId: data.userId,
+                    answer: answer
                 });
             });
     }
 
     handleAnswer(data) {
-        const peerData = this.peerConnections.get(data.from);
+        const peerData = this.peerConnections.get(data.userId);
         if (peerData) {
-            peerData.pc.setRemoteDescription(new RTCSessionDescription(data.data));
+            peerData.pc.setRemoteDescription(new RTCSessionDescription(data.answer));
         }
     }
 
     handleIceCandidate(data) {
-        const peerData = this.peerConnections.get(data.from);
+        const peerData = this.peerConnections.get(data.userId);
         if (peerData) {
-            peerData.pc.addIceCandidate(new RTCIceCandidate(data.data));
+            peerData.pc.addIceCandidate(new RTCIceCandidate(data.candidate));
         }
     }
 
@@ -1982,9 +1983,19 @@ class BaseChatMode {
 
     updateUserList(usersList) {
         if (usersList) {
+            const previousUsers = new Set(this.roomUsers.keys());
             this.roomUsers.clear();
+            
             for (const [userId, userInfo] of Object.entries(usersList)) {
-                this.roomUsers.set(userId, userInfo);
+                if (userId !== this.currentUserId) {
+                    this.roomUsers.set(userId, userInfo);
+                    
+                    // 如果是新用户，且我们还没有与其建立连接，创建P2P连接
+                    if (!previousUsers.has(userId) && !this.peerConnections.has(userId)) {
+                        console.log('为新用户创建P2P连接:', userId);
+                        this.createPeerConnection(userId, true);
+                    }
+                }
             }
         }
         
