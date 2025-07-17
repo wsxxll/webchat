@@ -80,11 +80,24 @@ class ModeSelector {
                 this.loadAvailableServers();
             }
             
-            if (!roomId && this.currentMode === 'internet') {
-                this.showNotification('❌ 公网模式需要房间ID');
+            // 如果没有房间ID，不建立连接
+            if (!roomId) {
+                console.log('等待房间ID...');
                 return;
             }
             
+            // 如果已经连接到同一个房间，不重复连接
+            if (this.currentRoomId === roomId && this.isWebSocketConnected) {
+                console.log('已连接到房间:', roomId);
+                return;
+            }
+            
+            // 如果连接到不同房间，先断开
+            if (this.websocket && this.currentRoomId !== roomId) {
+                this.disconnect();
+            }
+            
+            this.currentRoomId = roomId;
             this.currentServerIndex = 0;
             this.tryNextServer(roomId);
         } catch (error) {
@@ -115,6 +128,9 @@ class ModeSelector {
                 const url = new URL(wsUrl);
                 url.searchParams.set('room', roomId);
                 wsUrl = url.toString();
+                console.log('WebSocket URL with room ID:', wsUrl);
+            } else {
+                console.log('WebSocket URL without room ID:', wsUrl);
             }
             this.websocket = new WebSocket(wsUrl);
             
@@ -235,6 +251,19 @@ class ModeSelector {
             clearInterval(this.heartbeatTimer);
             this.heartbeatTimer = null;
         }
+    }
+    
+    /**
+     * 断开连接
+     */
+    disconnect() {
+        if (this.websocket) {
+            this.websocket.close();
+            this.websocket = null;
+        }
+        this.isWebSocketConnected = false;
+        this.currentRoomId = null;
+        this.stopHeartbeat();
     }
     
     // 模式管理
