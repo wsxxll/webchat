@@ -37,6 +37,17 @@ class InternetMode extends BaseChatMode {
     onWebSocketConnected() {
         super.onWebSocketConnected();
         this.showNotification('✅ 已连接到信令服务器');
+        
+        // 如果是通过房间ID重连的，自动发送join消息
+        const roomId = this.domElements.roomInput.value.trim();
+        if (roomId && !this.currentRoomId) {
+            this.sendWebSocketMessage({
+                type: 'join',
+                room: roomId,
+                userId: this.currentUserInfo?.id,
+                userInfo: this.currentUserInfo
+            });
+        }
     }
 
     joinRoom() {
@@ -46,22 +57,28 @@ class InternetMode extends BaseChatMode {
             return;
         }
         
-        if (!this.isWebSocketConnected) {
-            this.showNotification('WebSocket未连接，请稍后再试');
-            return;
-        }
-        
         if (this.currentRoomId) {
             this.leaveRoom();
         }
         
         this.currentUserInfo = this.generateUserInfo();
         
-        this.sendWebSocketMessage({
-            type: 'join',
-            room: roomId,
-            userInfo: this.currentUserInfo
-        });
+        // 对于Cloudflare Workers后端，需要重新连接WebSocket并在URL中包含房间ID
+        if (window.modeSelector && window.modeSelector.reconnectWithRoom) {
+            window.modeSelector.reconnectWithRoom(roomId);
+        } else {
+            // 兼容原有方式
+            if (!this.isWebSocketConnected) {
+                this.showNotification('WebSocket未连接，请稍后再试');
+                return;
+            }
+            
+            this.sendWebSocketMessage({
+                type: 'join',
+                room: roomId,
+                userInfo: this.currentUserInfo
+            });
+        }
     }
 
     leaveRoom() {

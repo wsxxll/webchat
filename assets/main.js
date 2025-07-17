@@ -93,9 +93,16 @@ class ModeSelector {
         this.connectWebSocket(serverUrl);
     }
     
-    connectWebSocket(serverUrl) {
+    connectWebSocket(serverUrl, roomId = null) {
         try {
-            this.websocket = new WebSocket(serverUrl || WS_CONFIG.url);
+            // 对于公网模式，需要在URL中包含房间ID
+            let wsUrl = serverUrl || WS_CONFIG.url;
+            if (roomId && this.currentMode === 'internet') {
+                const url = new URL(wsUrl);
+                url.searchParams.set('room', roomId);
+                wsUrl = url.toString();
+            }
+            this.websocket = new WebSocket(wsUrl);
             
             this.websocket.onopen = () => {
                 console.log('WebSocket已连接到:', serverUrl || WS_CONFIG.url);
@@ -113,6 +120,12 @@ class ModeSelector {
             
             this.websocket.onmessage = (event) => {
                 const message = JSON.parse(event.data);
+                
+                // 处理Cloudflare Workers的连接确认消息
+                if (message.type === 'connected') {
+                    console.log('收到连接确认:', message);
+                }
+                
                 // 将消息转发给当前模式处理
                 if (this.chatModeInstance && this.chatModeInstance.handleWebSocketMessage) {
                     this.chatModeInstance.handleWebSocketMessage(message);
@@ -152,6 +165,28 @@ class ModeSelector {
             };
         } catch (error) {
             console.error('WebSocket连接失败:', error);
+        }
+    }
+    
+    /**
+     * 重新连接到指定房间（用于公网模式）
+     * @param {string} roomId - 房间ID
+     */
+    reconnectWithRoom(roomId) {
+        if (this.currentMode !== 'internet') {
+            console.warn('只有公网模式才需要指定房间ID');
+            return;
+        }
+        
+        // 断开当前连接
+        if (this.websocket) {
+            this.websocket.close();
+        }
+        
+        // 使用房间ID重新连接
+        const server = this.availableServers[this.currentServerIndex];
+        if (server) {
+            this.connectWebSocket(server.url, roomId);
         }
     }
     
