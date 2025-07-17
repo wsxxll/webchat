@@ -3,9 +3,7 @@ const WS_CONFIG = {
   // 服务器列表，按优先级排序
   servers: [
     // Cloudflare Workers 后端
-    'wss://webchat.wsxxll.workers.dev/ws',
-    // 备用服务器
-    'wss://chat.canghai.org'
+    'wss://webchat.wsxxll.workers.dev/ws'
   ],
   
   // 连接设置

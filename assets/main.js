@@ -29,8 +29,8 @@ class ModeSelector {
         this.initializeElements();
         this.bindEvents();
         
-        // 先建立WebSocket连接
-        await this.connectToAvailableServer();
+        // 获取可用服务器列表
+        this.loadAvailableServers();
         
         // 默认加载局域网模式
         await this.loadMode('lan');
@@ -57,29 +57,43 @@ class ModeSelector {
         this.elements.internetModeButton.addEventListener('click', () => this.switchMode('internet'));
     }
     
+    // 加载可用服务器列表
+    loadAvailableServers() {
+        if (!WS_CONFIG.servers || WS_CONFIG.servers.length === 0) {
+            this.showNotification('❌ 没有可用的服务器配置');
+            return;
+        }
+        
+        // 将服务器URL转换为带优先级的对象
+        this.availableServers = WS_CONFIG.servers.map((server, index) => {
+            if (typeof server === 'string') {
+                return { url: server, priority: index + 1 };
+            }
+            return server;
+        });
+    }
+    
     // WebSocket连接管理
-    async connectToAvailableServer() {
+    async connectToAvailableServer(roomId = null) {
         try {
-            if (!WS_CONFIG.servers || WS_CONFIG.servers.length === 0) {
-                this.showNotification('❌ 没有可用的服务器配置');
+            if (!this.availableServers || this.availableServers.length === 0) {
+                this.loadAvailableServers();
+            }
+            
+            if (!roomId && this.currentMode === 'internet') {
+                this.showNotification('❌ 公网模式需要房间ID');
                 return;
             }
             
-            // 将服务器URL转换为带优先级的对象
-            this.availableServers = WS_CONFIG.servers.map((server, index) => {
-                if (typeof server === 'string') {
-                    return { url: server, priority: index + 1 };
-                }
-                return server;
-            });
-            this.tryNextServer();
+            this.currentServerIndex = 0;
+            this.tryNextServer(roomId);
         } catch (error) {
-            console.error('加载服务器列表失败:', error);
-            this.showNotification('❌ 加载服务器列表失败');
+            console.error('连接服务器失败:', error);
+            this.showNotification('❌ 连接服务器失败');
         }
     }
     
-    tryNextServer() {
+    tryNextServer(roomId = null) {
         if (this.currentServerIndex >= this.availableServers.length) {
             this.showNotification('❌ 所有服务器都不可用');
             this.currentServerIndex = 0;
@@ -90,7 +104,7 @@ class ModeSelector {
         const serverUrl = server.url;
         console.log(`尝试连接服务器 ${this.currentServerIndex + 1}/${this.availableServers.length}: ${server.name || serverUrl}`);
         this.showNotification(`🔄 连接到 ${server.name || '服务器'}...`);
-        this.connectWebSocket(serverUrl);
+        this.connectWebSocket(serverUrl, roomId);
     }
     
     connectWebSocket(serverUrl, roomId = null) {
@@ -137,7 +151,7 @@ class ModeSelector {
                 this.showNotification('❌ 连接错误，尝试下一个服务器...');
                 
                 this.currentServerIndex++;
-                setTimeout(() => this.tryNextServer(), WS_CONFIG.serverSwitchDelay);
+                setTimeout(() => this.tryNextServer(roomId), WS_CONFIG.serverSwitchDelay);
             };
             
             this.websocket.onclose = () => {
@@ -154,13 +168,13 @@ class ModeSelector {
                     this.showNotification(`🔄 重连中... (${this.reconnectionAttempts + 1}/${WS_CONFIG.maxReconnectAttempts})`);
                     setTimeout(() => {
                         this.reconnectionAttempts++;
-                        this.connectWebSocket(serverUrl);
+                        this.connectWebSocket(serverUrl, roomId);
                     }, WS_CONFIG.reconnectDelay);
                 } else {
                     this.reconnectionAttempts = 0;
                     this.currentServerIndex++;
                     this.showNotification('⚠️ 连接失败，尝试下一个服务器...');
-                    setTimeout(() => this.tryNextServer(), WS_CONFIG.serverSwitchDelay);
+                    setTimeout(() => this.tryNextServer(roomId), WS_CONFIG.serverSwitchDelay);
                 }
             };
         } catch (error) {

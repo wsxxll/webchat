@@ -8,6 +8,9 @@ class LANMode extends BaseChatMode {
         
         this.initializeElements();
         this.bindEvents();
+        
+        // 初始化局域网模式
+        this.initializeLANMode();
     }
 
     /**
@@ -30,26 +33,33 @@ class LANMode extends BaseChatMode {
     // 当WebSocket连接成功时调用
     onWebSocketConnected() {
         super.onWebSocketConnected();
-        // 自动连接到局域网
-        this.autoConnectToLAN();
+        
+        // 发送join消息
+        if (this.currentRoomId && this.currentUserInfo) {
+            this.sendWebSocketMessage({
+                type: 'join',
+                room: this.currentRoomId,
+                userId: this.currentUserInfo.id,
+                userInfo: this.currentUserInfo
+            });
+        }
     }
 
-    async autoConnectToLAN() {
+    // 在构造函数中调用，而不是等待WebSocket连接
+    async initializeLANMode() {
         const networkId = await this.getNetworkIdentifier();
         const defaultRoom = `lan_${networkId}`;
         
-        console.log('自动连接到局域网房间:', defaultRoom);
+        console.log('准备连接到局域网房间:', defaultRoom);
         
-        // 保存预期的房间名
+        // 保存房间信息
         this.currentRoomId = defaultRoom;
-        
         this.currentUserInfo = this.generateUserInfo();
         
-        this.sendWebSocketMessage({
-            type: 'join',
-            room: defaultRoom,
-            userInfo: this.currentUserInfo
-        });
+        // 连接到WebSocket服务器（带房间ID）
+        if (window.modeSelector) {
+            window.modeSelector.connectToAvailableServer(defaultRoom);
+        }
     }
 
     async getNetworkIdentifier() {

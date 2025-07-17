@@ -50,6 +50,11 @@ export default {
       });
     }
     
+    // Handle favicon.ico
+    if (url.pathname === "/favicon.ico") {
+      return new Response(null, { status: 204 });
+    }
+    
     // Serve static files from GitHub
     return handleStaticAssets(url.pathname, env);
   }
