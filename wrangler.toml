@@ -11,7 +11,7 @@ class_name = "ChatRoom"
 # Durable Objects migrations
 [[migrations]]
 tag = "v1"
-new_classes = ["ChatRoom"]
+new_sqlite_classes = ["ChatRoom"]
 
 # Routes for your domain
 # route = { pattern = "chat.example.com/*", zone_name = "example.com" }
