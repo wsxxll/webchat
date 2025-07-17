@@ -679,9 +679,11 @@ class BaseChatMode {
         this.showNotification(`👋 ${userName} 加入了房间`);
         this.updateUserList();
         
-        // 新用户加入，我们作为接收方，不创建 offer
+        // 新用户加入，使用用户ID比较来决定谁创建offer
         if (data.userId !== this.currentUserId) {
-            this.createPeerConnection(data.userId, false);
+            const shouldCreateOffer = this.currentUserId > data.userId;
+            console.log('用户加入，创建P2P连接:', data.userId, '是否创建offer:', shouldCreateOffer);
+            this.createPeerConnection(data.userId, shouldCreateOffer);
         }
     }
 
@@ -744,11 +746,13 @@ class BaseChatMode {
         if (createOffer) {
             pc.createOffer().then(offer => {
                 console.log(`为 ${this.formatUserId(peerId)} 创建offer`);
-                pc.setLocalDescription(offer);
+                return pc.setLocalDescription(offer);
+            }).then(() => {
+                console.log(`为 ${this.formatUserId(peerId)} 设置本地描述完成，发送offer`);
                 this.sendWebSocketMessage({
                     type: 'offer',
                     targetUserId: peerId,
-                    offer: offer
+                    offer: pc.localDescription
                 });
             }).catch(error => {
                 console.error(`为 ${this.formatUserId(peerId)} 创建offer失败:`, error);
@@ -831,31 +835,60 @@ class BaseChatMode {
     }
 
     handleOffer(data) {
+        console.log('收到offer from:', data.userId);
         const pc = this.createPeerConnection(data.userId, false);
         
         pc.setRemoteDescription(new RTCSessionDescription(data.offer))
-            .then(() => pc.createAnswer())
+            .then(() => {
+                console.log('设置远程描述成功，创建answer');
+                return pc.createAnswer();
+            })
             .then(answer => {
-                pc.setLocalDescription(answer);
+                console.log('创建answer成功，设置本地描述');
+                return pc.setLocalDescription(answer);
+            })
+            .then(() => {
+                console.log('发送answer to:', data.userId);
                 this.sendWebSocketMessage({
                     type: 'answer',
                     targetUserId: data.userId,
-                    answer: answer
+                    answer: pc.localDescription
                 });
+            })
+            .catch(error => {
+                console.error('处理offer失败:', error);
+                this.showNotification(`❌ 与用户的连接协商失败`);
             });
     }
 
     handleAnswer(data) {
+        console.log('收到answer from:', data.userId);
         const peerData = this.peerConnections.get(data.userId);
         if (peerData) {
-            peerData.pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+            peerData.pc.setRemoteDescription(new RTCSessionDescription(data.answer))
+                .then(() => {
+                    console.log('设置远程answer成功');
+                })
+                .catch(error => {
+                    console.error('设置远程answer失败:', error);
+                    this.showNotification(`❌ 与用户的连接协商失败`);
+                });
         }
     }
 
     handleIceCandidate(data) {
+        console.log('收到ICE candidate from:', data.userId);
         const peerData = this.peerConnections.get(data.userId);
-        if (peerData) {
-            peerData.pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        if (peerData && peerData.pc.remoteDescription) {
+            peerData.pc.addIceCandidate(new RTCIceCandidate(data.candidate))
+                .then(() => {
+                    console.log('添加ICE candidate成功');
+                })
+                .catch(error => {
+                    console.error('添加ICE candidate失败:', error);
+                });
+        } else {
+            console.log('跳过ICE candidate，远程描述未设置');
         }
     }
 
@@ -1992,8 +2025,10 @@ class BaseChatMode {
                     
                     // 如果是新用户，且我们还没有与其建立连接，创建P2P连接
                     if (!previousUsers.has(userId) && !this.peerConnections.has(userId)) {
-                        console.log('为新用户创建P2P连接:', userId);
-                        this.createPeerConnection(userId, true);
+                        // 使用用户ID比较来决定谁创建offer，避免冲突
+                        const shouldCreateOffer = this.currentUserId > userId;
+                        console.log('为新用户创建P2P连接:', userId, '是否创建offer:', shouldCreateOffer);
+                        this.createPeerConnection(userId, shouldCreateOffer);
                     }
                 }
             }
