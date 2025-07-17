@@ -109,9 +109,9 @@ class ModeSelector {
     
     connectWebSocket(serverUrl, roomId = null) {
         try {
-            // 对于公网模式，需要在URL中包含房间ID
+            // 对于 Cloudflare Workers，所有模式都需要在URL中包含房间ID
             let wsUrl = serverUrl || WS_CONFIG.url;
-            if (roomId && this.currentMode === 'internet') {
+            if (roomId) {
                 const url = new URL(wsUrl);
                 url.searchParams.set('room', roomId);
                 wsUrl = url.toString();
@@ -119,7 +119,7 @@ class ModeSelector {
             this.websocket = new WebSocket(wsUrl);
             
             this.websocket.onopen = () => {
-                console.log('WebSocket已连接到:', serverUrl || WS_CONFIG.url);
+                console.log('WebSocket已连接到:', wsUrl);
                 this.isWebSocketConnected = true;
                 this.reconnectionAttempts = 0;
                 this.currentServerIndex = 0;
