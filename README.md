@@ -36,13 +36,19 @@ npx http-server -p 8080
 ### 方式二：部署到 Cloudflare Workers
 
 ```bash
-cd workers
+# 安装依赖
 npm install
+
+# 登录 Cloudflare (首次部署需要)
 npx wrangler login
+
+# 部署
 npm run deploy
+# 或者使用部署脚本
+./deploy.sh
 ```
 
-部署成功后，更新 `assets/config.js` 中的服务器地址。
+部署成功后，更新 `assets/config.js` 中的服务器地址为你的 Worker URL。
 
 ## 📖 使用说明
 
@@ -75,13 +81,12 @@ webchat/
 │   ├── lan.js             # 局域网模式实现
 │   ├── net.js             # 公网模式实现
 │   └── styles.css         # 样式文件
-├── workers/               # Cloudflare Workers 后端
-│   ├── src/
-│   │   ├── index.js       # Workers 入口
-│   │   └── chatroom.js    # Durable Objects 房间管理
-│   ├── wrangler.toml      # Cloudflare 配置
-│   ├── package.json       # 依赖配置
-│   └── README.md          # Workers 部署说明
+├── src/                   # Cloudflare Workers 源代码
+│   ├── index.js           # Workers 入口
+│   └── chatroom.js        # Durable Objects 房间管理
+├── wrangler.toml          # Cloudflare Workers 配置
+├── package.json           # 项目依赖
+├── deploy.sh              # 部署脚本
 └── README.md
 ```
 
