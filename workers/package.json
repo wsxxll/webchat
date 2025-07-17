@@ -1,0 +1,19 @@
+{
+  "name": "webchat-workers",
+  "version": "1.0.0",
+  "description": "WebChat backend using Cloudflare Workers and Durable Objects",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "format": "prettier --write \"src/**/*.js\""
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240806.0",
+    "prettier": "^3.3.3",
+    "wrangler": "^3.72.0"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

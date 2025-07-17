@@ -2,10 +2,12 @@
 const WS_CONFIG = {
   // 服务器列表，按优先级排序
   servers: [
+    // Cloudflare Workers 后端
+    'wss://webchat.your-subdomain.workers.dev/ws',
+    // 备用服务器（如果部署了多个实例）
+    // 'wss://webchat-backup.your-subdomain.workers.dev/ws',
+    // 原有服务器作为备用
     'wss://chat.canghai.org'
-    // 可以添加更多备用服务器
-    // 'wss://backup1.example.com',
-    // 'wss://backup2.example.com'
   ],
   
   // 连接设置
