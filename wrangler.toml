@@ -26,9 +26,4 @@ GITHUB_REPO = "webchat"
 GITHUB_BRANCH = "main"
 
 [env.production]
-vars = { 
-  ENVIRONMENT = "production",
-  GITHUB_OWNER = "wsxxll",
-  GITHUB_REPO = "webchat",
-  GITHUB_BRANCH = "main"
-}
+vars = { ENVIRONMENT = "production", GITHUB_OWNER = "wsxxll", GITHUB_REPO = "webchat", GITHUB_BRANCH = "main" }
