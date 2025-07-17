@@ -50,12 +50,8 @@ export default {
       });
     }
     
-    // Default response
-    return new Response("WebChat API - Use /ws endpoint for WebSocket connections", {
-      headers: corsHeaders({
-        "Content-Type": "text/plain"
-      })
-    });
+    // Serve static files from GitHub
+    return handleStaticAssets(url.pathname, env);
   }
 };
 
@@ -123,4 +119,68 @@ async function sha256(text) {
   return Array.from(new Uint8Array(hash))
     .map(b => b.toString(16).padStart(2, "0"))
     .join("");
+}
+
+async function handleStaticAssets(pathname, env) {
+  // GitHub repository information
+  const GITHUB_OWNER = env.GITHUB_OWNER || "wsxxll";
+  const GITHUB_REPO = env.GITHUB_REPO || "webchat";
+  const GITHUB_BRANCH = env.GITHUB_BRANCH || "main";
+  
+  // Map paths to files
+  let filePath = pathname;
+  if (pathname === "/" || pathname === "") {
+    filePath = "/index.html";
+  }
+  
+  // Construct GitHub raw content URL
+  const githubUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}${filePath}`;
+  
+  try {
+    // Fetch from GitHub
+    const response = await fetch(githubUrl);
+    
+    if (!response.ok) {
+      return new Response("Not Found", { status: 404 });
+    }
+    
+    // Get content
+    const content = await response.text();
+    
+    // Determine content type
+    const contentType = getContentType(filePath);
+    
+    // Return response with appropriate headers
+    return new Response(content, {
+      headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "public, max-age=3600",
+        ...corsHeaders()
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching from GitHub:", error);
+    return new Response("Internal Server Error", { status: 500 });
+  }
+}
+
+function getContentType(filePath) {
+  const ext = filePath.split('.').pop().toLowerCase();
+  const mimeTypes = {
+    'html': 'text/html; charset=utf-8',
+    'css': 'text/css; charset=utf-8',
+    'js': 'application/javascript; charset=utf-8',
+    'json': 'application/json; charset=utf-8',
+    'png': 'image/png',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'gif': 'image/gif',
+    'svg': 'image/svg+xml',
+    'ico': 'image/x-icon',
+    'woff': 'font/woff',
+    'woff2': 'font/woff2',
+    'ttf': 'font/ttf',
+    'otf': 'font/otf'
+  };
+  return mimeTypes[ext] || 'text/plain; charset=utf-8';
 }

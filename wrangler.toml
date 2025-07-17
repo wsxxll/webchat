@@ -19,5 +19,16 @@ new_sqlite_classes = ["ChatRoom"]
 # Or use workers.dev subdomain
 # workers_dev = true
 
+# Environment variables
+[vars]
+GITHUB_OWNER = "wsxxll"
+GITHUB_REPO = "webchat"
+GITHUB_BRANCH = "main"
+
 [env.production]
-vars = { ENVIRONMENT = "production" }
+vars = { 
+  ENVIRONMENT = "production",
+  GITHUB_OWNER = "wsxxll",
+  GITHUB_REPO = "webchat",
+  GITHUB_BRANCH = "main"
+}
