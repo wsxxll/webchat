@@ -1,7 +1,7 @@
-name = "webchat"
+name = "webchat-api"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
-workers_dev = false
+workers_dev = true
 
 # Durable Objects bindings
 [[durable_objects.bindings]]
@@ -13,17 +13,12 @@ class_name = "ChatRoom"
 tag = "v1"
 new_sqlite_classes = ["ChatRoom"]
 
-# Routes for your domain
-route = { pattern = "chat.890099.xyz/*", zone_name = "890099.xyz" }
-
-# Or use workers.dev subdomain
-# workers_dev = false
-
 # Environment variables
 [vars]
-GITHUB_OWNER = "wsxxll"
-GITHUB_REPO = "webchat"
-GITHUB_BRANCH = "main"
+ALLOWED_ORIGINS = "*"
 
 [env.production]
-vars = { ENVIRONMENT = "production", GITHUB_OWNER = "wsxxll", GITHUB_REPO = "webchat", GITHUB_BRANCH = "main" }
+vars = { 
+  ENVIRONMENT = "production",
+  ALLOWED_ORIGINS = "https://*.pages.dev,https://chat.890099.xyz"
+}

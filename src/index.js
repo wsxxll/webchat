@@ -7,25 +7,29 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     
+    // Get allowed origins from environment
+    const allowedOrigins = env.ALLOWED_ORIGINS || '*';
+    
     // Handle CORS preflight
     if (request.method === "OPTIONS") {
-      return handleCORS(request);
+      return handleCORS(request, allowedOrigins);
     }
     
     // WebSocket endpoint
-    if (url.pathname.startsWith("/ws")) {
-      return handleWebSocket(request, env);
+    if (url.pathname === "/ws" || url.pathname.startsWith("/ws")) {
+      return handleWebSocket(request, env, allowedOrigins);
     }
     
     // Health check endpoint
     if (url.pathname === "/health") {
       return new Response(JSON.stringify({
         status: "ok",
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        service: "webchat-api"
       }), {
         headers: corsHeaders({
           "Content-Type": "application/json"
-        })
+        }, allowedOrigins)
       });
     }
     
@@ -33,7 +37,10 @@ export default {
     if (url.pathname.startsWith("/room/")) {
       const roomId = url.pathname.split("/")[2];
       if (!roomId) {
-        return new Response("Room ID required", { status: 400 });
+        return new Response("Room ID required", { 
+          status: 400,
+          headers: corsHeaders({}, allowedOrigins)
+        });
       }
       
       const roomIdHash = await sha256(roomId);
@@ -46,26 +53,51 @@ export default {
       return new Response(data, {
         headers: corsHeaders({
           "Content-Type": "application/json"
-        })
+        }, allowedOrigins)
       });
     }
     
-    // Handle favicon.ico
-    if (url.pathname === "/favicon.ico") {
-      return new Response(null, { status: 204 });
-    }
-    
-    // Serve static files from GitHub
-    return handleStaticAssets(url.pathname, env);
+    // Default response for unknown endpoints
+    return new Response(JSON.stringify({
+      error: "Not Found",
+      message: "This is the WebChat API. Available endpoints: /ws, /health, /room/:id"
+    }), { 
+      status: 404,
+      headers: corsHeaders({
+        "Content-Type": "application/json"
+      }, allowedOrigins)
+    });
   }
 };
 
-async function handleWebSocket(request, env) {
+async function handleWebSocket(request, env, allowedOrigins) {
   const url = new URL(request.url);
   const roomId = url.searchParams.get("room");
   
   if (!roomId) {
-    return new Response("Room ID required", { status: 400 });
+    return new Response("Room ID required", { 
+      status: 400,
+      headers: corsHeaders({}, allowedOrigins)
+    });
+  }
+  
+  // Check origin for WebSocket connections
+  const origin = request.headers.get("Origin");
+  if (origin && allowedOrigins !== "*") {
+    const allowed = allowedOrigins.split(",").some(pattern => {
+      if (pattern.includes("*")) {
+        const regex = new RegExp(pattern.replace(/\*/g, ".*"));
+        return regex.test(origin);
+      }
+      return pattern === origin;
+    });
+    
+    if (!allowed) {
+      return new Response("Origin not allowed", { 
+        status: 403,
+        headers: corsHeaders({}, allowedOrigins)
+      });
+    }
   }
   
   // Create consistent room ID hash
@@ -80,7 +112,9 @@ async function handleWebSocket(request, env) {
   
   // Add CORS headers to WebSocket response
   const headers = new Headers(response.headers);
-  headers.set("Access-Control-Allow-Origin", "*");
+  const corsOrigin = origin || "*";
+  headers.set("Access-Control-Allow-Origin", corsOrigin);
+  headers.set("Access-Control-Allow-Credentials", "true");
   
   return new Response(response.body, {
     status: response.status,
@@ -90,16 +124,18 @@ async function handleWebSocket(request, env) {
   });
 }
 
-function handleCORS(request) {
+function handleCORS(request, allowedOrigins) {
   const headers = request.headers;
   const origin = headers.get("Origin");
   const method = headers.get("Access-Control-Request-Method");
   const requestHeaders = headers.get("Access-Control-Request-Headers");
   
+  const corsOrigin = origin && allowedOrigins !== "*" ? origin : allowedOrigins;
+  
   return new Response(null, {
     status: 204,
     headers: {
-      "Access-Control-Allow-Origin": origin || "*",
+      "Access-Control-Allow-Origin": corsOrigin,
       "Access-Control-Allow-Methods": method || "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": requestHeaders || "Content-Type",
       "Access-Control-Max-Age": "86400",
@@ -108,12 +144,13 @@ function handleCORS(request) {
   });
 }
 
-function corsHeaders(headers = {}) {
+function corsHeaders(headers = {}, allowedOrigins = "*") {
   return {
     ...headers,
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": allowedOrigins,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type"
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Credentials": "true"
   };
 }
 
@@ -124,68 +161,4 @@ async function sha256(text) {
   return Array.from(new Uint8Array(hash))
     .map(b => b.toString(16).padStart(2, "0"))
     .join("");
-}
-
-async function handleStaticAssets(pathname, env) {
-  // GitHub repository information
-  const GITHUB_OWNER = env.GITHUB_OWNER || "wsxxll";
-  const GITHUB_REPO = env.GITHUB_REPO || "webchat";
-  const GITHUB_BRANCH = env.GITHUB_BRANCH || "main";
-  
-  // Map paths to files
-  let filePath = pathname;
-  if (pathname === "/" || pathname === "") {
-    filePath = "/index.html";
-  }
-  
-  // Construct GitHub raw content URL
-  const githubUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}${filePath}`;
-  
-  try {
-    // Fetch from GitHub
-    const response = await fetch(githubUrl);
-    
-    if (!response.ok) {
-      return new Response("Not Found", { status: 404 });
-    }
-    
-    // Get content
-    const content = await response.text();
-    
-    // Determine content type
-    const contentType = getContentType(filePath);
-    
-    // Return response with appropriate headers
-    return new Response(content, {
-      headers: {
-        "Content-Type": contentType,
-        "Cache-Control": "public, max-age=3600",
-        ...corsHeaders()
-      }
-    });
-  } catch (error) {
-    console.error("Error fetching from GitHub:", error);
-    return new Response("Internal Server Error", { status: 500 });
-  }
-}
-
-function getContentType(filePath) {
-  const ext = filePath.split('.').pop().toLowerCase();
-  const mimeTypes = {
-    'html': 'text/html; charset=utf-8',
-    'css': 'text/css; charset=utf-8',
-    'js': 'application/javascript; charset=utf-8',
-    'json': 'application/json; charset=utf-8',
-    'png': 'image/png',
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'gif': 'image/gif',
-    'svg': 'image/svg+xml',
-    'ico': 'image/x-icon',
-    'woff': 'font/woff',
-    'woff2': 'font/woff2',
-    'ttf': 'font/ttf',
-    'otf': 'font/otf'
-  };
-  return mimeTypes[ext] || 'text/plain; charset=utf-8';
 }
