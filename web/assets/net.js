@@ -24,11 +24,15 @@ class InternetMode extends BaseChatMode {
     }
 
     bindEvents() {
-        // 只绑定基础事件，不绑定P2P相关事件
-        this.domElements.sendButton.addEventListener('click', () => this.sendChatMessage());
-        this.domElements.messageInput.addEventListener('keypress', (event) => {
+        // 存储事件处理函数的引用，以便后续移除
+        this._sendHandler = () => this.sendChatMessage();
+        this._enterHandler = (event) => {
             if (event.key === 'Enter') this.sendChatMessage();
-        });
+        };
+        
+        // 只绑定基础事件，不绑定P2P相关事件
+        this.domElements.sendButton.addEventListener('click', this._sendHandler);
+        this.domElements.messageInput.addEventListener('keypress', this._enterHandler);
         
         // 文件相关事件
         this.domElements.attachButton.addEventListener('click', () => {
@@ -655,6 +659,19 @@ class InternetMode extends BaseChatMode {
         statusElement.innerHTML = statusHtml;
     }
     
+    // 清理方法，移除事件监听器
+    cleanup() {
+        // 移除事件监听器
+        if (this._sendHandler) {
+            this.domElements.sendButton.removeEventListener('click', this._sendHandler);
+        }
+        if (this._enterHandler) {
+            this.domElements.messageInput.removeEventListener('keypress', this._enterHandler);
+        }
+        
+        // 调用基类的cleanup
+        super.cleanup();
+    }
 }
 
 // 导出类供使用

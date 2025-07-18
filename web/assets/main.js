@@ -464,10 +464,14 @@ class BaseChatMode {
 
     // 共享的事件绑定
     bindSharedEvents() {
-        this.domElements.sendButton.addEventListener('click', () => this.sendChatMessage());
-        this.domElements.messageInput.addEventListener('keypress', (event) => {
+        // 存储事件处理函数的引用，以便后续移除
+        this._baseSendHandler = () => this.sendChatMessage();
+        this._baseEnterHandler = (event) => {
             if (event.key === 'Enter') this.sendChatMessage();
-        });
+        };
+        
+        this.domElements.sendButton.addEventListener('click', this._baseSendHandler);
+        this.domElements.messageInput.addEventListener('keypress', this._baseEnterHandler);
         
         // 输入框粘贴事件
         this.domElements.messageInput.addEventListener('paste', (event) => {
@@ -2338,6 +2342,14 @@ class BaseChatMode {
     }
 
     cleanup() {
+        // 移除事件监听器
+        if (this._baseSendHandler && this.domElements.sendButton) {
+            this.domElements.sendButton.removeEventListener('click', this._baseSendHandler);
+        }
+        if (this._baseEnterHandler && this.domElements.messageInput) {
+            this.domElements.messageInput.removeEventListener('keypress', this._baseEnterHandler);
+        }
+        
         this.closePeerConnections();
         this.roomUsers.clear();
         this.currentRoomId = null;
