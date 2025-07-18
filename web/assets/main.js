@@ -1,3 +1,35 @@
+// WebSocket 信令服务器配置
+const WS_CONFIG = {
+    // 服务器列表，按优先级排序
+    servers: [
+        `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/ws`
+    ],
+    
+    // 连接设置
+    heartbeatInterval: 30000,  // 心跳间隔：30秒
+    reconnectDelay: 3000,      // 重连延迟：3秒
+    maxReconnectAttempts: 5,   // 最大重连次数
+    serverSwitchDelay: 2000    // 服务器切换延迟：2秒
+};
+
+// WebRTC 配置 - 包含国内外STUN服务器以提升连接体验
+const RTC_CONFIG = {
+    iceServers: [
+        // 国外STUN服务器
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        // 国内STUN服务器
+        { urls: 'stun:stun.qq.com:3478' },
+        { urls: 'stun:stun.miwifi.com:3478' },
+        { urls: 'stun:stun.chat.bilibili.com:3478' },
+        { urls: 'stun:stun.douyucdn.cn:18000' },
+        // 备用服务器
+        { urls: 'stun:stun.sipgate.net:3478' },
+        { urls: 'stun:stun.12connect.com:3478' }
+    ]
+};
+
 /**
  * 模式选择器 - 负责WebSocket连接管理和模式切换
  * 实现了单例WebSocket连接，支持LAN和Internet模式无缝切换
