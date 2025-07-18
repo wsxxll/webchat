@@ -193,8 +193,6 @@ class ModeSelector {
                 console.error('WebSocket URL:', wsUrl);
                 console.error('WebSocket readyState:', this.websocket?.readyState);
                 
-                // 诊断API端点
-                this.diagnoseConnection(wsUrl);
                 
                 this.showNotification('❌ 连接错误，尝试下一个服务器...');
                 
@@ -415,52 +413,6 @@ class ModeSelector {
         }
     }
     
-    // 诊断连接问题
-    async diagnoseConnection(wsUrl) {
-        try {
-            console.log('🔍 开始诊断连接问题...');
-            
-            // 测试健康检查端点
-            const healthUrl = wsUrl.replace('/websocket', '/websocket/health').replace('wss://', 'https://').replace('ws://', 'http://');
-            console.log('测试健康检查:', healthUrl);
-            
-            const healthResponse = await fetch(healthUrl);
-            console.log('健康检查状态:', healthResponse.status);
-            
-            if (healthResponse.ok) {
-                const healthData = await healthResponse.text();
-                console.log('健康检查响应:', healthData);
-            } else {
-                console.error('健康检查失败:', await healthResponse.text());
-            }
-            
-            // 测试WebSocket端点的HTTP响应
-            const wsHttpUrl = wsUrl.replace('wss://', 'https://').replace('ws://', 'http://');
-            console.log('测试WebSocket端点HTTP响应:', wsHttpUrl);
-            
-            const wsResponse = await fetch(wsHttpUrl);
-            console.log('WebSocket端点状态:', wsResponse.status);
-            
-            if (!wsResponse.ok) {
-                const errorText = await wsResponse.text();
-                console.error('WebSocket端点错误:', errorText);
-                
-                // 尝试解析JSON错误信息
-                try {
-                    const errorData = JSON.parse(errorText);
-                    if (errorData.error === 'Worker binding not found') {
-                        console.error('❌ Worker绑定未配置！请在Pages设置中添加webchat-core绑定');
-                        this.showNotification('❌ Worker绑定未配置，请检查Pages设置');
-                    }
-                } catch (e) {
-                    // 不是JSON错误
-                }
-            }
-            
-        } catch (error) {
-            console.error('诊断过程中发生错误:', error);
-        }
-    }
     
     showNotification(text) {
         const notification = document.createElement('div');
