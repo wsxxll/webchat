@@ -2,13 +2,7 @@
 const WS_CONFIG = {
   // 服务器列表，按优先级排序
   servers: [
-    // 通过Pages Functions代理到Workers API
-    // 使用相对路径，自动使用当前域名
-    (() => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host;
-      return `${protocol}//${host}/api/ws`;
-    })()
+      `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/ws`
   ],
   
   // 连接设置
@@ -26,17 +20,3 @@ const RTC_CONFIG = {
   ]
 };
 
-// 房间设置
-const ROOM_CONFIG = {
-  maxUsersLan: 50,        // 局域网最大用户数
-  maxUsersInternet: 20    // 公网最大用户数
-};
-
-// API 配置
-const API_CONFIG = {
-  baseUrl: '/api',  // API基础路径
-  endpoints: {
-    health: '/health',
-    room: '/room'
-  }
-};

@@ -513,24 +513,6 @@ class InternetMode extends BaseChatMode {
         statusElement.innerHTML = statusHtml;
     }
     
-    showNotification(text) {
-        const notification = document.createElement('div');
-        notification.className = 'notification';
-        notification.textContent = text;
-        
-        const existingNotifications = document.querySelectorAll('.notification:not(.notification-exit)');
-        const offset = existingNotifications.length * 60;
-        notification.style.top = `${20 + offset}px`;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => notification.classList.add('notification-show'), 10);
-        
-        setTimeout(() => {
-            notification.classList.add('notification-exit');
-            setTimeout(() => notification.remove(), 500);
-        }, 3000);
-    }
 }
 
 // 导出类供使用

@@ -18,8 +18,7 @@ class LANMode extends BaseChatMode {
      */
     initializeElements() {
         this.domElements = {
-            ...this.initializeSharedElements(),
-            autoStatus: document.getElementById('autoStatus')
+            ...this.initializeSharedElements()
         };
     }
 
@@ -282,11 +281,6 @@ class LANMode extends BaseChatMode {
         statusElement.innerHTML = statusHtml;
     }
 
-    updateAutoStatus(text) {
-        if (this.domElements.autoStatus) {
-            this.domElements.autoStatus.textContent = text;
-        }
-    }
 }
 
 // 导出类供使用

@@ -27,45 +27,28 @@ export default {
         timestamp: new Date().toISOString(),
         service: "webchat-api"
       }), {
-        headers: corsHeaders({
-          "Content-Type": "application/json"
-        }, allowedOrigins)
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": allowedOrigins,
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type"
+        }
       });
     }
     
-    // Room stats endpoint (for debugging)
-    if (url.pathname.startsWith("/room/")) {
-      const roomId = url.pathname.split("/")[2];
-      if (!roomId) {
-        return new Response("Room ID required", { 
-          status: 400,
-          headers: corsHeaders({}, allowedOrigins)
-        });
-      }
-      
-      const roomIdHash = await sha256(roomId);
-      const durableId = env.CHAT_ROOMS.idFromName(roomIdHash);
-      const stub = env.CHAT_ROOMS.get(durableId);
-      
-      const response = await stub.fetch(new Request(`http://internal/stats`));
-      const data = await response.text();
-      
-      return new Response(data, {
-        headers: corsHeaders({
-          "Content-Type": "application/json"
-        }, allowedOrigins)
-      });
-    }
     
     // Default response for unknown endpoints
     return new Response(JSON.stringify({
       error: "Not Found",
-      message: "This is the WebChat API. Available endpoints: /ws, /health, /room/:id"
+      message: "This is the WebChat API. Available endpoints: /ws, /health"
     }), { 
       status: 404,
-      headers: corsHeaders({
-        "Content-Type": "application/json"
-      }, allowedOrigins)
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": allowedOrigins,
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      }
     });
   }
 };
@@ -144,15 +127,6 @@ function handleCORS(request, allowedOrigins) {
   });
 }
 
-function corsHeaders(headers = {}, allowedOrigins = "*") {
-  return {
-    ...headers,
-    "Access-Control-Allow-Origin": allowedOrigins,
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Credentials": "true"
-  };
-}
 
 async function sha256(text) {
   const encoder = new TextEncoder();
