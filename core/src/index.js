@@ -15,8 +15,9 @@ export default {
       return handleCORS(request, allowedOrigins);
     }
     
-    // WebSocket endpoint
-    if (url.pathname === "/ws" || url.pathname.startsWith("/ws")) {
+    // WebSocket endpoint - support both direct /ws and Pages Functions /api/ws
+    if (url.pathname === "/ws" || url.pathname.startsWith("/ws") || 
+        url.pathname === "/api/ws" || url.pathname.startsWith("/api/ws")) {
       return handleWebSocket(request, env, allowedOrigins);
     }
     
@@ -54,13 +55,43 @@ export default {
 };
 
 async function handleWebSocket(request, env, allowedOrigins) {
+  // Validate WebSocket upgrade headers
+  const upgradeHeader = request.headers.get("Upgrade");
+  const connectionHeader = request.headers.get("Connection");
+  
+  if (!upgradeHeader || upgradeHeader.toLowerCase() !== "websocket") {
+    return new Response("WebSocket Upgrade header required", { 
+      status: 400,
+      headers: {
+        "Access-Control-Allow-Origin": allowedOrigins,
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      }
+    });
+  }
+  
+  if (!connectionHeader || !connectionHeader.toLowerCase().includes("upgrade")) {
+    return new Response("Connection: Upgrade header required", { 
+      status: 400,
+      headers: {
+        "Access-Control-Allow-Origin": allowedOrigins,
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      }
+    });
+  }
+  
   const url = new URL(request.url);
   const roomId = url.searchParams.get("room");
   
   if (!roomId) {
     return new Response("Room ID required", { 
       status: 400,
-      headers: corsHeaders({}, allowedOrigins)
+      headers: {
+        "Access-Control-Allow-Origin": allowedOrigins,
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      }
     });
   }
   
@@ -78,7 +109,11 @@ async function handleWebSocket(request, env, allowedOrigins) {
     if (!allowed) {
       return new Response("Origin not allowed", { 
         status: 403,
-        headers: corsHeaders({}, allowedOrigins)
+        headers: {
+          "Access-Control-Allow-Origin": allowedOrigins,
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type"
+        }
       });
     }
   }
@@ -93,19 +128,10 @@ async function handleWebSocket(request, env, allowedOrigins) {
   // Forward the WebSocket request to the Durable Object
   const response = await stub.fetch(request);
   
-  // Add CORS headers to WebSocket response
-  const headers = new Headers(response.headers);
-  const corsOrigin = origin || "*";
-  headers.set("Access-Control-Allow-Origin", corsOrigin);
-  headers.set("Access-Control-Allow-Credentials", "true");
-  
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: headers,
-    webSocket: response.webSocket
-  });
+  // For WebSocket responses, don't modify headers as they may interfere with the upgrade
+  return response;
 }
+
 
 function handleCORS(request, allowedOrigins) {
   const headers = request.headers;

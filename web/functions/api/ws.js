@@ -23,21 +23,27 @@ export async function onRequest(context) {
   }
   
   try {
-    // Create new request with proper WebSocket handling
+    // For Pages Functions, we need to create a proper URL for the worker
     const url = new URL(request.url);
-    const workerUrl = new URL(url.pathname + url.search, 'https://webchat-core.wsxxll.workers.dev');
     
+    // Map /api/ws to /ws for the worker
+    const workerPath = url.pathname.replace('/api/ws', '/ws');
+    const workerUrl = new URL(workerPath + url.search, request.url);
+    
+    // Create request with all original headers preserved
     const workerRequest = new Request(workerUrl, {
       method: request.method,
       headers: request.headers,
       body: request.body,
-      // Important: Support WebSocket upgrade
-      duplex: 'half'
+      // Important for WebSocket upgrade
+      duplex: request.body ? 'half' : undefined
     });
     
-    // Forward request to Worker
+    // Forward directly to worker
     return await workerBinding.fetch(workerRequest);
+    
   } catch (error) {
+    console.error('Worker request failed:', error);
     return new Response(JSON.stringify({
       error: 'Worker request failed',
       message: error.message,

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Connection Test</title>
+</head>
+<body>
+    <h1>WebSocket Connection Test</h1>
+    <div id="status">Testing...</div>
+    <div id="log"></div>
+    
+    <script>
+        const log = document.getElementById('log');
+        const status = document.getElementById('status');
+        
+        function logMessage(message) {
+            console.log(message);
+            log.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+        }
+        
+        function testWebSocket() {
+            // Test different WebSocket URLs
+            const testUrls = [
+                `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/ws?room=test_room`,
+                `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws?room=test_room`
+            ];
+            
+            let currentIndex = 0;
+            
+            function tryNextUrl() {
+                if (currentIndex >= testUrls.length) {
+                    status.textContent = 'All tests failed';
+                    logMessage('❌ All WebSocket URLs failed');
+                    return;
+                }
+                
+                const url = testUrls[currentIndex];
+                logMessage(`Testing URL: ${url}`);
+                
+                const ws = new WebSocket(url);
+                
+                const timeout = setTimeout(() => {
+                    ws.close();
+                    logMessage(`❌ Timeout for ${url}`);
+                    currentIndex++;
+                    tryNextUrl();
+                }, 10000);
+                
+                ws.onopen = () => {
+                    clearTimeout(timeout);
+                    logMessage(`✅ Connected to ${url}`);
+                    status.textContent = 'Connected successfully!';
+                    
+                    // Send a test message
+                    ws.send(JSON.stringify({
+                        type: 'join',
+                        roomId: 'test_room',
+                        userId: 'test_user_' + Date.now(),
+                        userInfo: { name: 'Test User', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=test' }
+                    }));
+                };
+                
+                ws.onmessage = (event) => {
+                    const message = JSON.parse(event.data);
+                    logMessage(`📩 Received: ${JSON.stringify(message)}`);
+                };
+                
+                ws.onerror = (error) => {
+                    clearTimeout(timeout);
+                    logMessage(`❌ Error for ${url}: ${error}`);
+                    currentIndex++;
+                    tryNextUrl();
+                };
+                
+                ws.onclose = (event) => {
+                    clearTimeout(timeout);
+                    logMessage(`🔌 Closed ${url} - Code: ${event.code}, Reason: ${event.reason}`);
+                    if (currentIndex < testUrls.length - 1) {
+                        currentIndex++;
+                        tryNextUrl();
+                    }
+                };
+            }
+            
+            tryNextUrl();
+        }
+        
+        // Start test
+        testWebSocket();
+    </script>
+</body>
+</html>
