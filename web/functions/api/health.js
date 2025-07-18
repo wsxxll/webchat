@@ -23,8 +23,16 @@ export async function onRequest(context) {
   }
   
   try {
+    // Create new request for health check
+    const workerRequest = new Request('https://webchat-core.wsxxll.workers.dev/health', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
     // Forward request to Worker
-    return await workerBinding.fetch(request);
+    return await workerBinding.fetch(workerRequest);
   } catch (error) {
     return new Response(JSON.stringify({
       error: 'Worker request failed',
