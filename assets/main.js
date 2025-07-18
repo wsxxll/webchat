@@ -2020,9 +2020,11 @@ class BaseChatMode {
             this.roomUsers.clear();
             
             for (const [userId, userInfo] of Object.entries(usersList)) {
+                // 保存所有用户信息，包括自己
+                this.roomUsers.set(userId, userInfo);
+                
+                // 只为其他用户创建P2P连接
                 if (userId !== this.currentUserId) {
-                    this.roomUsers.set(userId, userInfo);
-                    
                     // 如果是新用户，且我们还没有与其建立连接，创建P2P连接
                     if (!previousUsers.has(userId) && !this.peerConnections.has(userId)) {
                         // 使用用户ID比较来决定谁创建offer，避免冲突
