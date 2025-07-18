@@ -82,13 +82,11 @@ class ModeSelector {
             
             // 如果没有房间ID，不建立连接
             if (!roomId) {
-                console.log('等待房间ID...');
                 return;
             }
             
             // 如果已经连接到同一个房间，不重复连接
             if (this.currentRoomId === roomId && this.isWebSocketConnected) {
-                console.log('已连接到房间:', roomId);
                 return;
             }
             
@@ -128,15 +126,11 @@ class ModeSelector {
                 const url = new URL(wsUrl);
                 url.searchParams.set('room', roomId);
                 wsUrl = url.toString();
-                console.log('WebSocket URL with room ID:', wsUrl);
-            } else {
-                console.log('WebSocket URL without room ID:', wsUrl);
-            }
-            console.log('创建WebSocket连接:', wsUrl);
+                } else {
+                }
             this.websocket = new WebSocket(wsUrl);
             
             this.websocket.onopen = () => {
-                console.log('WebSocket已连接到:', wsUrl);
                 this.isWebSocketConnected = true;
                 this.reconnectionAttempts = 0;
                 this.currentServerIndex = 0;
@@ -154,7 +148,6 @@ class ModeSelector {
                 
                 // 处理Cloudflare Workers的连接确认消息
                 if (message.type === 'connected') {
-                    console.log('收到连接确认:', message);
                 }
                 
                 // 将消息转发给当前模式处理
@@ -178,7 +171,6 @@ class ModeSelector {
             };
             
             this.websocket.onclose = () => {
-                console.log('WebSocket已断开');
                 this.isWebSocketConnected = false;
                 this.stopHeartbeat();
                 
@@ -247,7 +239,7 @@ class ModeSelector {
             if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
                 this.websocket.send(JSON.stringify({ type: 'heartbeat' }));
             }
-        }, 30000);
+        }, WS_CONFIG.heartbeatInterval);
     }
     
     /**
@@ -310,7 +302,6 @@ class ModeSelector {
             }
             
             this.currentMode = mode;
-            console.log(`已加载${mode === 'lan' ? '局域网' : '公网'}模式`);
             
         } catch (error) {
             console.error(`加载${mode === 'lan' ? '局域网' : '公网'}模式失败:`, error);

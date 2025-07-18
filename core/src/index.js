@@ -15,9 +15,8 @@ export default {
       return handleCORS(request, allowedOrigins);
     }
     
-    // WebSocket endpoint - support both direct /ws and Pages Functions /api/ws
-    if (url.pathname === "/ws" || url.pathname.startsWith("/ws") || 
-        url.pathname === "/api/ws" || url.pathname.startsWith("/api/ws")) {
+    // WebSocket endpoint
+    if (url.pathname === "/ws" || url.pathname.startsWith("/ws")) {
       return handleWebSocket(request, env, allowedOrigins);
     }
     

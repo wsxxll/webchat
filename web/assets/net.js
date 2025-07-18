@@ -62,7 +62,7 @@ class InternetMode extends BaseChatMode {
         if (roomId && !this.currentRoomId) {
             this.sendWebSocketMessage({
                 type: 'join',
-                room: roomId,
+                roomId: roomId,
                 userId: this.currentUserInfo?.id,
                 userInfo: this.currentUserInfo
             });
@@ -106,7 +106,7 @@ class InternetMode extends BaseChatMode {
         
         this.sendWebSocketMessage({
             type: 'leave',
-            room: this.currentRoomId
+            roomId: this.currentRoomId
         });
         
         this.currentRoomId = null;
@@ -129,8 +129,6 @@ class InternetMode extends BaseChatMode {
 
     handleJoinedRoom(data) {
         this.currentRoomId = data.roomId || this.domElements.roomInput.value.trim();
-        
-        console.log('已加入房间:', this.currentRoomId);
         
         // 更新UI
         this.domElements.roomInput.style.display = 'none';
@@ -172,7 +170,7 @@ class InternetMode extends BaseChatMode {
             case 'heartbeat-ack':
                 break;
             default:
-                console.log('未知消息类型:', message.type);
+                break;
         }
     }
 

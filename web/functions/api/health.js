@@ -23,8 +23,11 @@ export async function onRequest(context) {
   }
   
   try {
-    // Create new request for health check
-    const workerRequest = new Request('https://webchat-core.wsxxll.workers.dev/health', {
+    // Create new request for health check using the binding
+    const url = new URL(request.url);
+    const healthUrl = new URL('/health', url.origin);
+    
+    const workerRequest = new Request(healthUrl, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'

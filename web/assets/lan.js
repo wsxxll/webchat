@@ -49,7 +49,6 @@ class LANMode extends BaseChatMode {
         const networkId = await this.getNetworkIdentifier();
         const defaultRoom = `lan_${networkId}`;
         
-        console.log('准备连接到局域网房间:', defaultRoom);
         
         // 保存房间信息
         this.currentRoomId = defaultRoom;
@@ -117,7 +116,6 @@ class LANMode extends BaseChatMode {
                                 resolved = true;
                                 clearTimeout(timeout);
                                 pc.close();
-                                console.log('检测到公网IP:', ip);
                                 resolve(ip);
                             }
                         }
@@ -163,7 +161,6 @@ class LANMode extends BaseChatMode {
                                 resolved = true;
                                 clearTimeout(timeout);
                                 pc.close();
-                                console.log('检测到本地网段:', segment);
                                 resolve(segment);
                             }
                         }
@@ -194,7 +191,6 @@ class LANMode extends BaseChatMode {
         const users = data.users || [];
         const usersInfo = data.usersInfo || {};
         
-        console.log('已加入局域网房间:', this.currentRoomId, '用户列表:', users.map(id => this.formatUserId(id)));
         
         this.roomUsers.clear();
         this.roomUsers.set(this.currentUserId, this.currentUserInfo);
@@ -215,7 +211,6 @@ class LANMode extends BaseChatMode {
         
         users.forEach(userId => {
             if (userId !== this.currentUserId) {
-                console.log('创建与以下用户的P2P连接:', this.formatUserId(userId));
                 this.createPeerConnection(userId, true);
             }
         });

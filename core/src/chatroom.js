@@ -180,13 +180,6 @@ export class ChatRoom {
       sessionId: sessionId
     });
     
-    // Send join confirmation
-    this.sendToSession(sessionId, {
-      type: "joined",
-      roomId: this.roomId,
-      userId: userId,
-      userInfo: session.userInfo
-    });
     
     // Notify other users
     this.broadcast({
@@ -195,16 +188,14 @@ export class ChatRoom {
       userInfo: session.userInfo
     }, sessionId);
     
-    // Send current user list
+    // Send complete join response with user list
     this.sendToSession(sessionId, {
-      type: "user-list",
-      users: Object.fromEntries(this.users)
-    });
-    
-    // Notify all users of updated list
-    this.broadcast({
-      type: "user-list",
-      users: Object.fromEntries(this.users)
+      type: "joined",
+      roomId: this.roomId,
+      userId: userId,
+      userInfo: session.userInfo,
+      users: Array.from(this.users.keys()),
+      usersInfo: Object.fromEntries(this.users)
     });
   }
 
@@ -223,12 +214,6 @@ export class ChatRoom {
       type: "user-left",
       userId: userId
     }, sessionId);
-    
-    // Send updated user list
-    this.broadcast({
-      type: "user-list",
-      users: Object.fromEntries(this.users)
-    });
   }
 
   async handleWebRTC(sessionId, message) {
