@@ -2,13 +2,15 @@
 export async function onRequest(context) {
   const { request, env } = context;
   
-  // 检查是否有绑定的 Worker
-  if (!env.WEBCHAT_WORKER) {
+  // 检查是否有绑定的 Worker（支持多种命名）
+  const workerBinding = env['webchat-worker'] || env.WEBCHAT_WORKER || env.webchat_worker;
+  
+  if (!workerBinding) {
     return new Response(JSON.stringify({
       error: 'Worker binding not found',
-      message: 'The WEBCHAT_WORKER binding is not configured. Please add a Service binding in Pages settings.',
+      message: 'The worker binding is not configured. Please add a Service binding in Pages settings.',
       details: {
-        variableName: 'WEBCHAT_WORKER',
+        expectedNames: ['webchat-worker', 'WEBCHAT_WORKER', 'webchat_worker'],
         availableBindings: Object.keys(env).filter(key => !key.startsWith('CF_'))
       }
     }), { 
@@ -39,7 +41,7 @@ export async function onRequest(context) {
     });
     
     // 直接调用绑定的 Worker
-    return await env.WEBCHAT_WORKER.fetch(workerRequest);
+    return await workerBinding.fetch(workerRequest);
   } catch (error) {
     // 如果Worker调用失败，返回错误信息
     return new Response(JSON.stringify({
