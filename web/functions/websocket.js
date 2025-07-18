@@ -1,6 +1,7 @@
-// WebSocket endpoint for Cloudflare Pages Functions
+// WebSocket and Health check endpoint for Cloudflare Pages Functions
 export async function onRequest(context) {
   const { request, env } = context;
+  const url = new URL(request.url);
   
   // Check for Worker binding
   const workerBinding = env['webchat-core'];
@@ -23,11 +24,23 @@ export async function onRequest(context) {
   }
   
   try {
-    // For Pages Functions, we need to create a proper URL for the worker
-    const url = new URL(request.url);
+    // Handle health check requests
+    if (url.pathname.endsWith('/health')) {
+      const healthUrl = new URL('/health', url.origin);
+      
+      const workerRequest = new Request(healthUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      return await workerBinding.fetch(workerRequest);
+    }
     
-    // Map /api/ws to /ws for the worker
-    const workerPath = url.pathname.replace('/api/ws', '/ws');
+    // Handle WebSocket requests
+    // Map /websocket to /ws for the worker
+    const workerPath = url.pathname.replace('/websocket', '/ws');
     const workerUrl = new URL(workerPath + url.search, request.url);
     
     // Create request with all original headers preserved

@@ -2,7 +2,7 @@
 const WS_CONFIG = {
     // 服务器列表，按优先级排序
     servers: [
-        `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/ws`
+        `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/websocket`
     ],
     
     // 连接设置
@@ -421,7 +421,7 @@ class ModeSelector {
             console.log('🔍 开始诊断连接问题...');
             
             // 测试健康检查端点
-            const healthUrl = wsUrl.replace('/ws', '/health').replace('wss://', 'https://').replace('ws://', 'http://');
+            const healthUrl = wsUrl.replace('/websocket', '/websocket/health').replace('wss://', 'https://').replace('ws://', 'http://');
             console.log('测试健康检查:', healthUrl);
             
             const healthResponse = await fetch(healthUrl);
