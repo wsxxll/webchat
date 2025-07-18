@@ -2,8 +2,8 @@
 const WS_CONFIG = {
   // 服务器列表，按优先级排序
   servers: [
-    // Cloudflare Workers 后端
-    'wss://webchat.wsxxll.workers.dev/ws'
+    // Cloudflare Workers 后端 - 使用自定义域名
+    'wss://chat.890099.xyz/ws'
   ],
   
   // 连接设置

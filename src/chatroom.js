@@ -133,6 +133,14 @@ export class ChatRoom {
         await this.handleWebRTC(sessionId, message);
         break;
         
+      case "message":
+        await this.handleMessage(sessionId, message);
+        break;
+        
+      case "file-message":
+        await this.handleFileMessage(sessionId, message);
+        break;
+        
       case "heartbeat":
         session.lastHeartbeat = Date.now();
         this.sendToSession(sessionId, { type: "heartbeat-ack" });
@@ -251,6 +259,46 @@ export class ChatRoom {
       ...message,
       userId: session.userId
     });
+  }
+
+  async handleMessage(sessionId, message) {
+    const session = this.sessions.get(sessionId);
+    if (!session || !session.joined) return;
+    
+    // 添加发送者信息
+    const forwardMessage = {
+      ...message,
+      userId: session.userId,
+      userInfo: session.userInfo
+    };
+    
+    // 广播消息给所有其他用户
+    this.broadcast(forwardMessage, sessionId);
+  }
+  
+  async handleFileMessage(sessionId, message) {
+    const session = this.sessions.get(sessionId);
+    if (!session || !session.joined) return;
+    
+    // 文件大小限制检查（5MB）
+    const maxFileSize = 5 * 1024 * 1024;
+    if (message.data && message.data.length > maxFileSize * 1.37) { // base64编码约增加37%大小
+      this.sendToSession(sessionId, {
+        type: "error",
+        message: "文件太大，最大支持 5MB"
+      });
+      return;
+    }
+    
+    // 添加发送者信息
+    const forwardMessage = {
+      ...message,
+      userId: session.userId,
+      userInfo: session.userInfo
+    };
+    
+    // 广播文件消息给所有其他用户
+    this.broadcast(forwardMessage, sessionId);
   }
 
   async handleClose(sessionId) {
