@@ -63,11 +63,11 @@ class InternetMode extends BaseChatMode {
         
         // 如果是通过房间ID重连的，自动发送join消息
         const roomId = this.domElements.roomInput.value.trim();
-        if (roomId && !this.currentRoomId) {
+        if (roomId && !this.currentRoomId && this.currentUserInfo) {
             this.sendWebSocketMessage({
                 type: 'join',
                 roomId: roomId,
-                userId: this.currentUserInfo?.id,
+                userId: this.currentUserInfo.id,
                 userInfo: this.currentUserInfo
             });
         }
@@ -84,7 +84,9 @@ class InternetMode extends BaseChatMode {
             this.leaveRoom();
         }
         
+        // 生成用户信息并保存，以便在重连后使用
         this.currentUserInfo = this.generateUserInfo();
+        this.currentUserId = this.currentUserInfo.id;
         
         // 对于Cloudflare Workers后端，需要重新连接WebSocket并在URL中包含房间ID
         if (window.modeSelector && window.modeSelector.reconnectWithRoom) {
@@ -164,6 +166,7 @@ class InternetMode extends BaseChatMode {
 
     // 覆盖基类的WebSocket消息处理
     handleWebSocketMessage(message) {
+        console.log('[InternetMode] Received message:', message.type, message);
         switch (message.type) {
             case 'joined':
                 this.currentUserId = message.userId;
@@ -338,6 +341,8 @@ class InternetMode extends BaseChatMode {
     sendChatMessage() {
         const message = this.domElements.messageInput.value.trim();
         if (!message) return;
+        
+        console.log('[InternetMode] sendChatMessage - currentRoomId:', this.currentRoomId, 'roomUsers:', this.roomUsers.size);
         
         if (!this.currentRoomId) {
             this.showNotification('请先加入房间');
