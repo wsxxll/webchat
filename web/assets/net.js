@@ -130,6 +130,22 @@ class InternetMode extends BaseChatMode {
     handleJoinedRoom(data) {
         this.currentRoomId = data.roomId || this.domElements.roomInput.value.trim();
         
+        // 处理用户列表
+        if (data.usersInfo) {
+            this.roomUsers.clear();
+            for (const [userId, userInfo] of Object.entries(data.usersInfo)) {
+                this.roomUsers.set(userId, userInfo);
+            }
+        }
+        
+        // 添加自己到用户列表（如果不存在）
+        if (this.currentUserId && !this.roomUsers.has(this.currentUserId)) {
+            this.roomUsers.set(this.currentUserId, this.currentUserInfo);
+        }
+        
+        // 更新用户列表显示
+        this.updateUserList();
+        
         // 更新UI
         this.domElements.roomInput.style.display = 'none';
         this.domElements.joinButton.style.display = 'none';
@@ -184,6 +200,134 @@ class InternetMode extends BaseChatMode {
         const userName = userInfo ? userInfo.name : '用户';
         this.showNotification(`👋 ${userName} 加入了房间`);
         this.updateUserList();
+    }
+
+    // 覆盖用户离开处理
+    handleUserLeft(data) {
+        const userInfo = this.roomUsers.get(data.userId);
+        if (userInfo) {
+            const userName = userInfo.name || '用户';
+            this.showNotification(`👋 ${userName} 离开了房间`);
+            this.roomUsers.delete(data.userId);
+            this.updateUserList();
+        }
+    }
+
+    // 覆盖用户列表更新，移除P2P连接逻辑
+    updateUserList() {
+        this.renderUserList();
+        
+        if (this.isWebSocketConnected) {
+            this.updateConnectionStatus('connected');
+        }
+    }
+
+    // 覆盖用户列表渲染，适配公网模式
+    renderUserList() {
+        let userListContainer = document.getElementById('userListContainer');
+        if (!userListContainer) {
+            userListContainer = document.createElement('div');
+            userListContainer.id = 'userListContainer';
+            userListContainer.className = 'user-list-container';
+            
+            const roomSection = document.querySelector('.room-section');
+            roomSection.appendChild(userListContainer);
+        }
+        
+        const allUsers = Array.from(this.roomUsers.entries());
+        const myself = allUsers.find(([userId]) => userId === this.currentUserId);
+        const otherUsers = allUsers.filter(([userId]) => userId !== this.currentUserId);
+        
+        const sortedUsers = myself ? [myself, ...otherUsers] : otherUsers;
+        
+        const userItems = sortedUsers.map(([userId, userInfo]) => {
+            const isMyself = userId === this.currentUserId;
+            const statusClass = isMyself ? 'user-online' : 'user-websocket';
+            const statusText = isMyself ? '(我)' : '(在线)';
+            
+            return `
+                <div class="user-item ${statusClass}" data-user-id="${userId}">
+                    <img class="user-avatar" src="${userInfo.avatar}" alt="${userInfo.name}">
+                    <span class="user-name">${userInfo.name}</span>
+                    <span class="user-status">${statusText}</span>
+                </div>
+            `;
+        }).join('');
+        
+        const userCount = this.roomUsers.size;
+        const roomName = this.currentRoomId || '未知房间';
+        
+        userListContainer.innerHTML = `
+            <div class="user-list-header">
+                <h3>房间: ${roomName}</h3>
+                <span class="user-count">${userCount} 人在线</span>
+            </div>
+            <div class="user-list">
+                ${userItems}
+            </div>
+        `;
+    }
+
+    // 实现连接状态更新
+    updateConnectionStatus(status) {
+        const statusElement = document.getElementById('connectionStatus');
+        if (!statusElement) return;
+        
+        statusElement.className = 'connection-status';
+        
+        let statusHtml = '';
+        
+        switch (status) {
+            case 'connected':
+                statusElement.classList.add('status-connected');
+                
+                let roomInfo = '';
+                if (this.currentRoomId) {
+                    const userCount = this.roomUsers.size;
+                    roomInfo = `
+                        <div class="status-room-info">
+                            <span class="room-name">${this.currentRoomId}</span>
+                            <span class="room-separator">·</span>
+                            <span class="room-users">${userCount} 人在线</span>
+                        </div>
+                    `;
+                }
+                
+                statusHtml = `
+                    <div class="status-content">
+                        ${roomInfo}
+                        <div class="status-indicator">
+                            <span class="status-dot"></span>
+                            <span class="status-text">已连接</span>
+                        </div>
+                    </div>
+                `;
+                break;
+            case 'disconnected':
+                statusElement.classList.add('status-disconnected');
+                statusHtml = `
+                    <div class="status-content">
+                        <div class="status-indicator">
+                            <span class="status-dot"></span>
+                            <span class="status-text">未连接</span>
+                        </div>
+                    </div>
+                `;
+                break;
+            case 'error':
+                statusElement.classList.add('status-error');
+                statusHtml = `
+                    <div class="status-content">
+                        <div class="status-indicator">
+                            <span class="status-dot"></span>
+                            <span class="status-text">连接错误</span>
+                        </div>
+                    </div>
+                `;
+                break;
+        }
+        
+        statusElement.innerHTML = statusHtml;
     }
 
     // 覆盖消息发送，使用WebSocket
