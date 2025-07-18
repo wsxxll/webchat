@@ -2001,11 +2001,12 @@ class BaseChatMode {
             '宋江', '林冲', '武松', '鲁智深', '李逵', '燕青', '潘金莲', '孙二娘', '扈三娘', '时迁'
         ];
         
+        const id = crypto.randomUUID();
         const name = names[Math.floor(Math.random() * names.length)];
         const seed = Math.random().toString(36).substring(2, 15);
         const avatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}`;
         
-        return { name, avatar };
+        return { id, name, avatar };
     }
 
     formatUserId(userId) {
