@@ -12,7 +12,7 @@ webchat/
 │   ├── index.html # 主页面
 │   └── package.json
 └── core/          # 后端项目 (Cloudflare Workers)
-    ├── chat-server.js  # Worker 源码
+    ├── server.js      # Worker 源码
     └── wrangler.toml
 ```
 
