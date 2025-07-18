@@ -17,8 +17,6 @@ new_sqlite_classes = ["ChatRoom"]
 [vars]
 ALLOWED_ORIGINS = "*"
 
-[env.production]
-vars = { 
-  ENVIRONMENT = "production",
-  ALLOWED_ORIGINS = "https://*.pages.dev,https://chat.890099.xyz"
-}
+[env.production.vars]
+ENVIRONMENT = "production"
+ALLOWED_ORIGINS = "https://*.pages.dev,https://chat.890099.xyz"
