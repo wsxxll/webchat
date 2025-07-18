@@ -4,26 +4,54 @@ export async function onRequest(context) {
   
   // 检查是否有绑定的 Worker
   if (!env.WEBCHAT_WORKER) {
-    return new Response('Worker binding not found', { status: 500 });
+    return new Response(JSON.stringify({
+      error: 'Worker binding not found',
+      message: 'The WEBCHAT_WORKER binding is not configured. Please add a Service binding in Pages settings.',
+      details: {
+        variableName: 'WEBCHAT_WORKER',
+        availableBindings: Object.keys(env).filter(key => !key.startsWith('CF_'))
+      }
+    }), { 
+      status: 503,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
   }
   
-  // 获取原始URL路径
-  const url = new URL(request.url);
-  
-  // 创建新的请求URL，去掉 /api 前缀
-  const workerPath = url.pathname.replace(/^\/api/, '') || '/';
-  const workerUrl = new URL(workerPath, request.url);
-  workerUrl.search = url.search;
-  
-  // 创建新的请求对象
-  const workerRequest = new Request(workerUrl, {
-    method: request.method,
-    headers: request.headers,
-    body: request.body,
-    // 重要：支持 WebSocket 升级
-    duplex: 'half'
-  });
-  
-  // 直接调用绑定的 Worker
-  return env.WEBCHAT_WORKER.fetch(workerRequest);
+  try {
+    // 获取原始URL路径
+    const url = new URL(request.url);
+    
+    // 创建新的请求URL，去掉 /api 前缀
+    const workerPath = url.pathname.replace(/^\/api/, '') || '/';
+    const workerUrl = new URL(workerPath, request.url);
+    workerUrl.search = url.search;
+    
+    // 创建新的请求对象
+    const workerRequest = new Request(workerUrl, {
+      method: request.method,
+      headers: request.headers,
+      body: request.body,
+      // 重要：支持 WebSocket 升级
+      duplex: 'half'
+    });
+    
+    // 直接调用绑定的 Worker
+    return await env.WEBCHAT_WORKER.fetch(workerRequest);
+  } catch (error) {
+    // 如果Worker调用失败，返回错误信息
+    return new Response(JSON.stringify({
+      error: 'Worker request failed',
+      message: error.message,
+      stack: error.stack
+    }), { 
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
 }
