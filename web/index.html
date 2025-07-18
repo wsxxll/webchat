@@ -19,7 +19,7 @@
                     <!-- 公网模式的房间输入区域 -->
                     <div class="internet-room-controls" id="internetRoomControls" style="display: none;">
                         <div class="room-input-group">
-                            <input type="text" id="roomInput" placeholder="房间号" maxlength="20" class="room-input">
+                            <input type="text" id="roomInput" placeholder="房间号" maxlength="20" class="room-input" autocomplete="off" autocapitalize="off" autocorrect="off">
                             <button class="btn-join" id="joinBtn">加入</button>
                             <button class="btn-leave" id="leaveBtn" style="display: none;">离开</button>
                         </div>
@@ -47,7 +47,7 @@
 
         <div class="chat-input">
             <div class="input-group">
-                <input type="text" id="messageInput" placeholder="检测到同网段用户后即可开始聊天..." disabled>
+                <input type="text" id="messageInput" placeholder="检测到同网段用户后即可开始聊天..." disabled autocomplete="off" enterkeyhint="send">
                 <input type="file" id="fileInput" style="display: none;">
                 <button class="btn btn-attach" id="attachBtn" disabled title="发送文件">📎</button>
                 <button class="btn btn-primary" id="sendBtn" disabled>发送</button>

@@ -980,3 +980,341 @@ body {
         padding: 4px 8px;
     }
 }
+
+/* 移动端优化 - 通用手机尺寸 */
+@media (max-width: 480px) {
+    /* 基础布局调整 */
+    body {
+        font-size: 16px; /* 防止iOS缩放 */
+    }
+    
+    .container {
+        padding: 0;
+        height: 100vh;
+        height: 100dvh; /* 动态视口高度 */
+    }
+    
+    .chat-container {
+        height: 100vh;
+        height: 100dvh;
+        border-radius: 0;
+    }
+    
+    .chat-app {
+        border-radius: 0;
+        height: 100%;
+        max-height: none;
+    }
+    
+    /* 头部优化 */
+    .section-header {
+        padding: 12px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(10px);
+    }
+    
+    /* 模式选择器优化 */
+    .mode-selector-container {
+        width: 100%;
+        gap: 12px;
+    }
+    
+    .connection-mode {
+        width: 100%;
+        padding: 3px;
+    }
+    
+    .mode-btn {
+        flex: 1;
+        padding: 10px 16px;
+        font-size: 14px;
+        min-height: 40px;
+    }
+    
+    .mode-button {
+        flex: 1;
+        padding: 12px 16px;
+        font-size: 14px;
+        min-height: 44px; /* 最小触摸目标 */
+    }
+    
+    /* 房间控制优化 */
+    .room-controls {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+    }
+    
+    .room-input {
+        flex: 1;
+        width: auto;
+        font-size: 16px; /* 防止iOS缩放 */
+        padding: 10px 12px;
+        min-height: 44px;
+    }
+    
+    .btn-join, .btn-leave {
+        padding: 10px 16px;
+        font-size: 14px;
+        min-height: 44px;
+        min-width: 80px;
+    }
+    
+    /* 聊天消息区域 */
+    .chat-messages {
+        padding: 12px;
+        padding-bottom: 80px; /* 为输入框留空间 */
+    }
+    
+    .message {
+        max-width: 90%;
+        font-size: 15px;
+    }
+    
+    .message-wrapper {
+        margin-bottom: 12px;
+    }
+    
+    .message-name {
+        font-size: 13px;
+    }
+    
+    .message-time {
+        font-size: 11px;
+    }
+    
+    /* 输入区域优化 */
+    .chat-input {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(148, 163, 184, 0.2);
+        z-index: 100;
+    }
+    
+    .input-group {
+        gap: 8px;
+    }
+    
+    .message-input {
+        font-size: 16px; /* 防止iOS缩放 */
+        padding: 12px 16px;
+        min-height: 44px;
+    }
+    
+    .send-button,
+    .attach-button,
+    .btn-primary,
+    .btn-attach {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #sendBtn {
+        min-width: 60px;
+        padding: 0 16px;
+        font-size: 14px;
+    }
+    
+    #attachBtn {
+        min-width: 44px;
+        padding: 0;
+        font-size: 20px;
+        margin-right: 8px;
+    }
+    
+    /* 用户列表优化 */
+    .user-list-container {
+        padding: 12px;
+    }
+    
+    .user-card {
+        padding: 10px;
+        margin-bottom: 8px;
+    }
+    
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .user-name {
+        font-size: 14px;
+    }
+    
+    .user-status {
+        font-size: 12px;
+    }
+    
+    /* 通知优化 */
+    .notification {
+        font-size: 14px;
+        padding: 12px 16px;
+        max-width: calc(100% - 32px);
+        bottom: 90px; /* 在输入框上方 */
+    }
+    
+    /* 文件预览优化 */
+    .file-record {
+        padding: 10px;
+    }
+    
+    .file-record-name {
+        font-size: 13px;
+    }
+    
+    .file-record-size {
+        font-size: 11px;
+    }
+    
+    /* 滚动条优化 */
+    .chat-messages::-webkit-scrollbar {
+        width: 4px;
+    }
+}
+
+/* 小屏手机特别优化 */
+@media (max-width: 375px) {
+    .mode-button {
+        font-size: 13px;
+        padding: 10px 12px;
+    }
+    
+    .message {
+        font-size: 14px;
+    }
+    
+    .btn-join, .btn-leave {
+        min-width: 70px;
+        font-size: 13px;
+    }
+}
+
+/* 横屏模式优化 */
+@media (max-height: 500px) and (orientation: landscape) {
+    .section-header {
+        padding: 8px;
+    }
+    
+    .mode-selector-container {
+        flex-direction: row;
+    }
+    
+    .chat-messages {
+        padding-bottom: 70px;
+    }
+    
+    .chat-input {
+        padding: 8px;
+    }
+    
+    .message-input {
+        min-height: 36px;
+        padding: 8px 12px;
+    }
+    
+    .send-button,
+    .attach-button {
+        min-height: 36px;
+    }
+}
+
+/* 安全区域适配（iPhone X及以上） */
+@supports (padding: max(0px)) {
+    .chat-input {
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+    
+    .container {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
+/* 触摸优化 */
+@media (hover: none) and (pointer: coarse) {
+    /* 增加所有可点击元素的触摸区域 */
+    button, .button, a {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* 移除悬停效果，改为活动状态 */
+    .mode-btn:active,
+    .mode-button:active,
+    .send-button:active,
+    .attach-button:active,
+    .btn-join:active,
+    .btn-leave:active,
+    .btn:active,
+    .btn-primary:active,
+    .btn-attach:active {
+        transform: scale(0.95);
+    }
+    
+    /* 优化触摸反馈 */
+    button, .button {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+    
+    /* 禁用移动端的backdrop-filter以提升性能 */
+    @media (max-width: 768px) {
+        .chat-app,
+        .chat-container {
+            backdrop-filter: none;
+            background: rgba(255, 255, 255, 0.98);
+        }
+        
+        .section-header {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .chat-input {
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+    }
+}
+
+/* 移动端滚动优化 */
+@media (max-width: 768px) {
+    .chat-messages {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+    }
+    
+    /* 防止横向滚动 */
+    body {
+        overflow-x: hidden;
+    }
+    
+    .chat-container {
+        overflow-x: hidden;
+    }
+}
+
+/* 修复移动端输入框聚焦时的问题 */
+@media (max-width: 768px) {
+    input:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+    
+    /* 输入框聚焦时调整布局 */
+    .message-input:focus {
+        position: relative;
+        z-index: 1;
+    }
+}
