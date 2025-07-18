@@ -21,7 +21,7 @@ webchat/
 ### 前端 (Cloudflare Pages)
 1. 在 Cloudflare Dashboard 中创建 Pages 项目
 2. 连接到此 Git 仓库的 `web` 目录
-3. 在 Pages 设置中添加 Worker 绑定: `webchat-worker`
+3. 在 Pages 设置中添加 Worker 绑定: `webchat-core`
 
 ### 后端 (Cloudflare Workers)
 1. 在 Cloudflare Dashboard 中创建 Worker 项目
