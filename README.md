@@ -1,46 +1,43 @@
-# WebChat
+# WebChat - 实时聊天应用
 
-基于 Cloudflare Pages + Workers 的实时聊天应用。
+基于 Cloudflare Pages + Workers 的实时聊天应用，支持局域网和公网模式。
 
 ## 项目结构
 
 ```
 webchat/
-├── index.html          # Pages 入口
-├── assets/             # 前端资源
-├── functions/          # Pages Functions (Worker 绑定)
-├── src/                # Workers 源码
-└── wrangler.toml       # Workers 配置
+├── web/           # 前端项目 (Cloudflare Pages)
+│   ├── assets/    # 静态资源
+│   ├── functions/ # Pages Functions
+│   ├── index.html # 主页面
+│   └── package.json
+└── core/          # 后端项目 (Cloudflare Workers)
+    ├── src/       # Worker 源码
+    └── wrangler.toml
 ```
 
-## 部署说明
+## 部署方式
 
-### 1. 部署 Worker (后端)
-在 Cloudflare Dashboard 中创建 Worker，上传 `src/` 目录下的代码。
+### 前端 (Cloudflare Pages)
+1. 在 Cloudflare Dashboard 中创建 Pages 项目
+2. 连接到此 Git 仓库的 `web` 目录
+3. 在 Pages 设置中添加 Worker 绑定: `webchat-worker`
 
-### 2. 部署 Pages (前端)
-在 Cloudflare Dashboard 中创建 Pages 项目：
-- 连接 GitHub 仓库
-- 构建设置：无需构建命令
-- 输出目录：`/` (根目录)
-
-### 3. 配置 Worker 绑定
-在 Pages 项目设置中：
-1. 进入 "Functions" → "Worker Routes & Bindings"
-2. 添加 Worker 绑定：
-   - Variable name: `WEBCHAT_WORKER`
-   - Service: 你的 Worker 名称
+### 后端 (Cloudflare Workers)
+1. 在 Cloudflare Dashboard 中创建 Worker 项目
+2. 上传 `core` 目录中的代码
+3. 配置 Durable Objects
 
 ## 功能特性
 
-- **局域网模式**: 自动发现同网段用户，P2P 直连
-- **公网模式**: 通过房间号连接，WebSocket 中转
-- **文件传输**: 支持图片和文件共享
-- **实时聊天**: 低延迟消息传输
+- **局域网模式**: 自动检测同网段用户，支持 P2P 连接
+- **公网模式**: 基于 WebSocket 的实时通信
+- **文件传输**: 支持拖拽上传和 P2P 文件传输
+- **响应式设计**: 适配移动端和桌面端
 
-## 技术架构
+## 技术栈
 
-- 前端通过 `/api/*` 路径访问后端
-- Pages Functions 使用 Worker 绑定直接调用 Worker
-- WebSocket 连接自动处理
-- Durable Objects 管理房间状态
+- **前端**: HTML5, CSS3, JavaScript (ES6+)
+- **后端**: Cloudflare Workers, Durable Objects
+- **通信**: WebSocket, WebRTC
+- **部署**: Cloudflare Pages + Workers

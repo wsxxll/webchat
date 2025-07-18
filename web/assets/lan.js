@@ -38,7 +38,7 @@ class LANMode extends BaseChatMode {
         if (this.currentRoomId && this.currentUserInfo) {
             this.sendWebSocketMessage({
                 type: 'join',
-                room: this.currentRoomId,
+                roomId: this.currentRoomId,
                 userId: this.currentUserInfo.id,
                 userInfo: this.currentUserInfo
             });

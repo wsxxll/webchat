@@ -134,7 +134,7 @@ export class ChatRoom {
         break;
         
       case "message":
-        await this.handleMessage(sessionId, message);
+        await this.handleChatMessage(sessionId, message);
         break;
         
       case "file-message":
@@ -261,7 +261,7 @@ export class ChatRoom {
     });
   }
 
-  async handleMessage(sessionId, message) {
+  async handleChatMessage(sessionId, message) {
     const session = this.sessions.get(sessionId);
     if (!session || !session.joined) return;
     

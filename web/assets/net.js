@@ -94,7 +94,8 @@ class InternetMode extends BaseChatMode {
             
             this.sendWebSocketMessage({
                 type: 'join',
-                room: roomId,
+                roomId: roomId,
+                userId: this.currentUserInfo.id,
                 userInfo: this.currentUserInfo
             });
         }
